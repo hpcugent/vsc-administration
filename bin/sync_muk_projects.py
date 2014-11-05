@@ -73,43 +73,6 @@ def main():
 
     opts = ExtendedSimpleOption(options)
     stats = {}
-
-    try:
-        muk = Muk()
-
-        l = LdapQuery(VscConfiguration())  # Initialise LDAP binding
-
-        muk_project_group_filter = CnFilter(muk.muk_project_group)
-
-        # all currently _running_ projects are elements is the projects autogroup
-        # these values are set elsewhere
-        try:
-            muk_group = Group.lookup(muk_project_group_filter)[0]
-            logger.info("Muk projects = %s" % (muk_group.autogroup))
-        except IndexError:
-            logger.raiseException("Could not find a group with cn %s. Cannot proceed synchronisation" % muk.muk_user_group)
-
-        # FIXME: This certainly is not correct.
-        muk_projects = [MukProject(project_id) for project_id in muk_group.memberUid]
-
-        projects_ok = 0
-        projects_fail = 0
-
-        for project in muk_projects:
-            if process_project(opts.options, project):
-                projects_ok += 1
-            else:
-                projects_fail += 1
-
-        (_, ldap_timestamp) = convert_timestamp()
-        if not opts.options.dry_run:
-            write_timestamp(SYNC_TIMESTAMP_FILENAME, ldap_timestamp)
-
-    except Exception, err:
-        logger.exception("critical exception caught: %s" % (err))
-        opts.critical("Script failed in a horrible way")
-        sys.exit(NAGIOS_EXIT_CRITICAL)
-
     opts.epilogue(stats)
 
 
