@@ -26,7 +26,9 @@ import time
 from urllib2 import HTTPError
 
 from vsc.administration.user import MukAccountpageUser
+from vsc.administration.project import MukProject
 from vsc.accountpage.client import AccountpageClient
+from vsc.accountpage.wrapper import VscMukProject
 from vsc.config.base import Muk, BRUSSEL
 from vsc.utils import fancylogger
 from vsc.utils.cache import FileCache
@@ -428,6 +430,33 @@ def purge_user(user, client):
         logging.info("Dry-run: not cleaning up home dir symlink for user %s" % (user.account.vsc_id))
 
 
+def process_projects(options, projects, client):
+    """
+    Synchronise the projects to the storage:
+    - create fileset
+    - set quota
+    - set owner and group ownership
+    """
+
+    error_projects = []
+    for p in projects:
+        project = MukProject(p.group['vsc_id'])
+        if options.dry_run:
+            project.dry_run = True
+
+        try:
+            project.create_fileset()
+        except Exception:
+            error_projects.append(project)
+
+    fail_projectcount = len(error_projects)
+    ok_projectcount = len(projects) - fail_projectcount
+
+    return {
+        'ok': ok_projectcount,
+        'fail': fail_projectcount
+    }
+
 def main():
     """
     Main script.
@@ -474,16 +503,27 @@ def main():
             stats["%s_users_sync_warning" % (institute,)] = int(total_institute_users / 5)  # 20% of all users want to get on
             stats["%s_users_sync_critical" % (institute,)] = int(total_institute_users / 2)  # 30% of all users want to get on
             stats["%s_users_sync_fail" % (institute,)] = users_ok.get('fail',0)
-            stats["%s_users_sync_fail_warning" % (institute,)] = users_ok.get('fail',0)
             stats["%s_users_sync_fail_warning" % (institute,)] = 1
             stats["%s_users_sync_fail_critical" % (institute,)] = 3
 
         purgees_stats = purge_obsolete_symlinks(opts.options.purge_cache, muk_users_set, client, opts.options.dry_run)
         stats.update(purgees_stats)
 
+        (status, muk_projects_set) = client.projects.muk.active.get()
+        if status == 200:
+            projects_ok = process_projects([VscMukProject(**p) for p in muk_projects_set], client)
+            stats["projects_sync"] = projects_ok.get('ok', 0)
+            stats["projects_sync_fail"] = projects_ok.get('fail', 0)
+        else:
+            stats["projects_sync"] = 0
+            stats["projects_sync_fail"] = 0
+
+        stats["projects_sync_fail_warning"] = 1
+        stats["projects_sync_fail_critical"] = 3
+
     except Exception, err:
         logger.exception("critical exception caught: %s" % (err))
-        opts.critical("Script failed in a horrible way")
+        opts.critical("Script failed. Please check logs.")
         sys.exit(NAGIOS_EXIT_CRITICAL)
 
     opts.epilogue("Muk users synchronisation completed", stats)
