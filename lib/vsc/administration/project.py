@@ -24,7 +24,7 @@ import pwd
 
 from urllib2 import HTTPError
 
-from vsc.accountpage.wrappers import VscAutogroup, VscGroup, VscProjectQuota
+from vsc.accountpage.wrappers import VscAccount, VscAutogroup, VscProjectQuota
 from vsc.config.base import Muk, VscStorage
 from vsc.filesystem.ext import ExtOperations
 from vsc.filesystem.gpfs import GpfsOperations
@@ -32,11 +32,12 @@ from vsc.filesystem.posix import PosixOperations
 
 
 class VscProject(object):
-    def __init__(self, project_id, rest_client):
+    def __init__(self, project_id, submitter, rest_client):
         """
         Initialise.
         """
         self.project_id = project_id
+        self.submitter = VscAccount(**submitter)
         self.rest_client = rest_client
 
         # We immediately retrieve this information
@@ -83,7 +84,7 @@ class MukProject(VscProject):
             if muk_quota:
                 self.project_scratch_quota = muk_quota[0]['hard']
             else:
-                self.project_scratch_quota = 250 * 1024 * 1024 * 1024
+                self.project_scratch_quota = 250 * 1024 * 1024  # KiB
 
     def _scratch_path(self, mount_point="gpfs"):
         """Determines the path (relative to the scratch mount point)

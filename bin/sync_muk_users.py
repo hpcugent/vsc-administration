@@ -415,7 +415,7 @@ def purge_user(user, client):
         logger.info("Purging %s" % (user.account.vsc_id,))
         # remove the user from the grace users
         institute = user.person.institute
-        group_name = "%st1_mukgraceusers" % institute[0]
+        group_name = "%st1_mukgraceusers" % institute
         try:
             client.group[group_name].member[user.account.vsc_id].delete()
         except HTTPError, err:
@@ -440,7 +440,7 @@ def process_projects(options, projects, client):
 
     error_projects = []
     for p in projects:
-        project = MukProject(p.group['vsc_id'])
+        project = MukProject(project_id=p.group['vsc_id'])
         if options.dry_run:
             project.dry_run = True
 
@@ -509,7 +509,7 @@ def main():
         purgees_stats = purge_obsolete_symlinks(opts.options.purge_cache, muk_users_set, client, opts.options.dry_run)
         stats.update(purgees_stats)
 
-        (status, muk_projects_set) = client.projects.muk.active.get()
+        (status, muk_projects_set) = client.project.muk.active.get()
         if status == 200:
             projects_ok = process_projects([VscMukProject(**p) for p in muk_projects_set], client)
             stats["projects_sync"] = projects_ok.get('ok', 0)
