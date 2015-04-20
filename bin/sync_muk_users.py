@@ -28,7 +28,7 @@ from urllib2 import HTTPError
 from vsc.administration.user import MukAccountpageUser
 from vsc.administration.project import MukProject
 from vsc.accountpage.client import AccountpageClient
-from vsc.accountpage.wrapper import VscMukProject
+from vsc.accountpage.wrappers import mkVscMukProject
 from vsc.config.base import Muk, BRUSSEL
 from vsc.utils import fancylogger
 from vsc.utils.cache import FileCache
@@ -440,12 +440,12 @@ def process_projects(options, projects, client):
 
     error_projects = []
     for p in projects:
-        project = MukProject(project_id=p.group['vsc_id'])
+        project = MukProject(p.group.vsc_id, p, rest_client=client)
         if options.dry_run:
             project.dry_run = True
 
         try:
-            project.create_fileset()
+            project.create_scratch_fileset()
         except Exception:
             error_projects.append(project)
 
@@ -511,7 +511,7 @@ def main():
 
         (status, muk_projects_set) = client.project.muk.active.get()
         if status == 200:
-            projects_ok = process_projects([VscMukProject(**p) for p in muk_projects_set], client)
+            projects_ok = process_projects([mkVscMukProject(p) for p in muk_projects_set], client)
             stats["projects_sync"] = projects_ok.get('ok', 0)
             stats["projects_sync_fail"] = projects_ok.get('fail', 0)
         else:

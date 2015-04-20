@@ -24,44 +24,49 @@ import pwd
 
 from urllib2 import HTTPError
 
-from vsc.accountpage.wrappers import VscAccount, VscAutogroup, VscProjectQuota
-from vsc.config.base import Muk, VscStorage
+from vsc.accountpage.wrappers import mkVscAccount, mkVscAutogroup, mkVscMukProject, mkVscProjectSizeQuota
+from vsc.config.base import Muk, VscStorage, VSC
 from vsc.filesystem.ext import ExtOperations
 from vsc.filesystem.gpfs import GpfsOperations
 from vsc.filesystem.posix import PosixOperations
 
 
 class VscProject(object):
-    def __init__(self, project_id, submitter, rest_client):
+    def __init__(self, project_id, rest_client=None):
         """
         Initialise.
+
+        :param project_id: string representing the unique ID of the project
+        :param rest_client: AccountpageClient instance
         """
         self.project_id = project_id
-        self.submitter = VscAccount(**submitter)
         self.rest_client = rest_client
-
-        # We immediately retrieve this information
-        try:
-            self.project = VscProject(**(rest_client.project[project_id].get()[1]))
-        except HTTPError:
-            logging.error("Cannot get information from the account page")
-            raise
-
-        self.group = VscAutogroup(**(self.project.group))
 
 
 class MukProject(VscProject):
-    """Project that will be run on Muk."""
+    """Project that will be computing on Muk."""
 
-    def __init__(self, project_id, storage=None, rest_client=None):
+    def __init__(self, project_id, project_info=None, storage=None, rest_client=None):
         """Initialisation.
 
-        @type project_id: string
-        @param project_id: the unique ID of the project, i.e.,  the LDAP cn entry
+        :param project_id: string representing the unique ID of the project
+        :param project_info: JSON detailing the information received from the account page regarding the project
+        :param storage: information about the storages in the VSC
+        :param rest_client: AccountpageClient instance
         """
         super(MukProject, self).__init__(project_id, rest_client)
 
+        if not project_info:
+            try:
+                self.project = mkVscMukProject(self.rest_client.project[self.project_id].get()[1])
+            except HTTPError:
+                logging.error("Could not retrieve muk project information for project ID %s" % (project_id,))
+                return
+        else:
+            self.project = project_info
+
         self.muk = Muk()
+        self.vsc = VSC()
 
         self.ext = ExtOperations()
         self.gpfs = GpfsOperations()
@@ -75,10 +80,10 @@ class MukProject(VscProject):
         self.scratch = self.gpfs.get_filesystem_info(self.muk.scratch_name)
 
         try:
-            all_quota = [VscProjectQuota(**q) for q in rest_client.project[self.project_id].quota.get()[1]]
+            all_quota = [mkVscProjectSizeQuota(q) for q in rest_client.project[self.project_id].quota.get()[1]]
         except HTTPError:
-            logging.exception("Unable to retrieve quota information from the accountpage")
-            self.user_scratch_storage = 0
+            logging.exception("Unable to retrieve quota information from the account page for project %s" % (self.project_id,))
+            self.project_scratch_quota = 0
         else:
             muk_quota = filter(lambda q: q.storage['name'] == self.muk.storage_name, all_quota)
             if muk_quota:
@@ -117,23 +122,24 @@ class MukProject(VscProject):
 
         if not self.gpfs.get_fileset_info(filesystem_name, fileset_name):
             logging.info("Creating new fileset for project %s on %s with name %s and path %s" % (self.project_id,
-                                                                                                  filesystem_name,
-                                                                                                  fileset_name,
-                                                                                                  path))
+                                                                                                 filesystem_name,
+                                                                                                 fileset_name,
+                                                                                                 path))
             base_dir_hierarchy = os.path.dirname(path)
             self.gpfs.make_dir(base_dir_hierarchy)
             self.gpfs.make_fileset(path, fileset_name)
         else:
             logging.info("Fileset %s already exists for project %s ... not creating again." % (fileset_name,
-                                                                                                self.project_id))
+                                                                                               self.project_id))
         self.gpfs.chmod(0770, path)
 
         if self.project.submitter:
-            self.gpfs.chown(self.project.submitter.vsc_id_number, self.group.vsc_id_number, path)
+            self.gpfs.chown(self.project.submitter.vsc_id_number, self.project.group.vsc_id_number, path)
         else:
-            self.gpfs.chown(pwd.getpwnam('nobody').pw_uid, self.group.vsc_id_number, path)
+            self.gpfs.chown(pwd.getpwnam('nobody').pw_uid, self.project.group.vsc_id_number, path)
 
-        self.gpfs.set_fileset_quota(self.project_scratch_quota, path, fileset_name)
+        self.gpfs.set_fileset_quota(self.project_scratch_quota * 1024, path, fileset_name)
+
 
     def __setattr__(self, name, value):
         """Override the setting of an attribute:
