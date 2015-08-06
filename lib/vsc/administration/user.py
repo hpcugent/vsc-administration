@@ -34,7 +34,7 @@ from collections import namedtuple
 from urllib2 import HTTPError
 
 from vsc import fancylogger
-from vsc.accountpage.wrappers import VscAccount, VscAccountPerson, VscAccountPubkey, VscHomeOnScratch, VscUserGroup
+from vsc.accountpage.wrappers import VscAccount, VscAccountPerson, VscAccountPubkey, mkVscHomeOnScratch, VscUserGroup
 from vsc.accountpage.wrappers import VscGroup, VscUserSizeQuota
 from vsc.administration.institute import Institute
 from vsc.administration.tools import create_stat_directory
@@ -73,7 +73,7 @@ class VscAccountPageUser(object):
                 self.usergroup = VscGroup(**(rest_client.group[user_id].get())[1])
             else:
                 self.usergroup = VscUserGroup(**(rest_client.account[user_id].usergroup.get()[1]))
-            self.home_on_scratch = [VscHomeOnScratch(**h) for h in rest_client.account[user_id].home_on_scratch.get()[1]]
+            self.home_on_scratch = [mkVscHomeOnScratch(h) for h in rest_client.account[user_id].home_on_scratch.get()[1]]
         except HTTPError:
             logging.error("Cannot get information from the account page")
             raise
@@ -851,7 +851,7 @@ class MukAccountpageUser(VscAccountPageUser):
         base_home_dir_hierarchy = os.path.dirname(source.rstrip('/'))
         target = None
 
-        if 'VSC_MUK_SCRATCH' in [s.storage['name'] for s in self.home_on_scratch]:
+        if 'VSC_MUK_SCRATCH' in [s.storage.name for s in self.home_on_scratch]:
             logging.info("User %s has his home on Muk scratch" % (self.account.vsc_id))
             target = self._scratch_path()
         elif 'VSC_MUK_AFM' in [s.storage['name'] for s in self.home_on_scratch]:
