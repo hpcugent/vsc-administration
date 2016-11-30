@@ -415,13 +415,16 @@ def process_vos(options, vo_ids, storage_name, client, datestamp):
                 vo.create_scratch_fileset(storage_name)
                 vo.set_scratch_quota(storage_name)
 
-
             if vo_id in (VSC().institute_vos.values()) and storage_name in (VSC_HOME, VSC_DATA):
                 logging.info("Not deploying default VO %s members on %s", vo_id, storage_name)
                 continue
 
             modified_member_list = client.vo[vo.vo_id].member.modified[datestamp].get()
-            modified_members = [VscTier2AccountpageUser(a["vsc_id"], rest_client=client) for a in modified_member_list[1]]
+
+            if vo_id in (VSC().institute_vos.values()) and vo_id not in (VSC().institute_vos[GENT],):
+                pass
+            else:
+                modified_members = [VscTier2AccountpageUser(a["vsc_id"], rest_client=client) for a in modified_member_list[1]]
 
             for member in modified_members:
                 try:
