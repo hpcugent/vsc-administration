@@ -211,16 +211,7 @@ def create_change_user_command(user, current_vo_id, new_vo_id, cluster):
     @returns: two lists comprising the commands
     """
     add_user_command = create_add_user_command(user, new_vo_id, cluster)
-    REMOVE_ASSOCIATION_USER_COMMAND = [
-        SLURM_SACCT_MGR,
-        "-i",   # commit immediately
-        "delete",
-        "user",
-        "name={0}".format(user),
-        "Account={0}".format(current_vo_id),
-        "where",
-        "Cluster={0}".format(cluster),
-    ]
+    remove_association_command = create_remove_association_command(user, current_vo_id, cluster)
     logging.debug(
         "Adding commands to change user %s on Cluster=%s from Account=%s to DefaultAccount=%s",
         user,
@@ -229,7 +220,7 @@ def create_change_user_command(user, current_vo_id, new_vo_id, cluster):
         new_vo_id
         )
 
-    return [add_user_command, REMOVE_ASSOCIATION_USER_COMMAND]
+    return [add_user_command, remove_association_command]
 
 
 def create_remove_user_command(user, cluster):
@@ -252,6 +243,25 @@ def create_remove_user_command(user, cluster):
         )
 
     return REMOVE_USER_COMMAND
+
+
+def create_remove_association_command(user, obsolete_vo_id, cluster):
+    """Create the command to remove an association
+
+    @returns: a list comprising the command.
+    """
+    REMOVE_ASSOCIATION_USER_COMMAND = [
+        SLURM_SACCT_MGR,
+        "-i",   # commit immediately
+        "delete",
+        "user",
+        "name={0}".format(user),
+        "Account={0}".format(obsolete_vo_id),
+        "where",
+        "Cluster={0}".format(cluster),
+    ]
+
+    return REMOVE_ASSOCIATION_USER_COMMAND
 
 
 def slurm_institute_accounts(slurm_account_info, clusters):
@@ -317,7 +327,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
 
     for cluster in clusters:
         cluster_users_acct = [
-            (user.User, user.Def_Acct) for user in slurm_user_info if user and user.Cluster == cluster
+            (user.User, user.Def_Acct, user.Account) for user in slurm_user_info if user and user.Cluster == cluster
         ]
         cluster_users = set([u[0] for u in cluster_users_acct])
 
@@ -328,6 +338,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
         new_users = set()
         changed_users = set()
         moved_users = set()
+        obsolete_users = set()
 
         for (vo_id, (members, vo)) in vo_members.items():
 
@@ -338,7 +349,13 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
             ])
 
             # these are the current Slurm users per Account, i.e., the VO currently being processed
-            slurm_acct_users = set([user for (user, acct) in cluster_users_acct if acct == vo_id])
+            slurm_acct_users = set([user for (user, def_acct, _) in cluster_users_acct if def_acct == vo_id])
+
+            # these are the users for which an earlier delete failed because they still had live job in their (at that
+            # time) current account (VO)
+            obsolete_users_vo = (set([user for (user, def_acct, acct) in cluster_users_acct 
+                if acct == vo_id and def_acct != acct]) - members) & active_accounts
+            obsolete_users |= set([(u, vo_id) for u in obsolete_users_vo])
 
             # these are the users that should no longer be in this account, but should not be removed
             # we need to look up their new VO
@@ -379,5 +396,10 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
             new_vo_id=new_vo_id,
             cluster=cluster) for (user, current_vo_id, (new_vo_id, _)) in moved_users])
         )
+
+        commands.extend([create_remove_association_command(
+            user=user, 
+            obsolete_vo_id=vo_id, 
+            cluster=cluster) for (user, vo_id) in obsolete_users])
 
     return commands
