@@ -353,7 +353,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
 
             # these are the users for which an earlier delete failed because they still had live job in their (at that
             # time) current account (VO)
-            obsolete_users_vo = (set([user for (user, def_acct, acct) in cluster_users_acct 
+            obsolete_users_vo = (set([user for (user, def_acct, acct) in cluster_users_acct
                 if acct == vo_id and def_acct != acct]) - members) & active_accounts
             obsolete_users |= set([(u, vo_id) for u in obsolete_users_vo])
 
@@ -398,8 +398,8 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
         )
 
         commands.extend([create_remove_association_command(
-            user=user, 
-            obsolete_vo_id=vo_id, 
+            user=user,
+            obsolete_vo_id=vo_id,
             cluster=cluster) for (user, vo_id) in obsolete_users])
 
     return commands
