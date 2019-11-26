@@ -453,7 +453,7 @@ def update_user_status(user, client):
                                         (user.user_id, account.status))
 
 
-def process_users_quota(options, user_quota, storage_name, client, host_institute=GENT, use_user_cache=True):
+def process_users_quota(user_quota, storage_name, client, host_institute=GENT, use_user_cache=True, dry_run=False):
     """
     Process the users' quota for the given storage.
     """
@@ -461,11 +461,12 @@ def process_users_quota(options, user_quota, storage_name, client, host_institut
     ok_quota = []
 
     for quota in user_quota:
-        user = VscTier2AccountpageUser(quota.user,
-                                       rest_client=client,
-                                       host_institute=host_institute,
-                                       use_user_cache=use_user_cache)
-        user.dry_run = options.dry_run
+        user = VscTier2AccountpageUser(
+            quota.user,
+            rest_client=client,
+            host_institute=host_institute,
+            use_user_cache=use_user_cache)
+        user.dry_run = dry_run
 
         try:
             if storage_name == VSC_HOME:
@@ -485,7 +486,7 @@ def process_users_quota(options, user_quota, storage_name, client, host_institut
     return (ok_quota, error_quota)
 
 
-def process_users(options, account_ids, storage_name, client, host_institute=GENT, use_user_cache=True):
+def process_users(account_ids, storage_name, client, host_institute=GENT, use_user_cache=True, dry_run=False):
     """
     Process the users.
 
@@ -504,11 +505,12 @@ def process_users(options, account_ids, storage_name, client, host_institute=GEN
     ok_users = []
 
     for vsc_id in sorted(account_ids):
-        user = VscTier2AccountpageUser(vsc_id,
-                                       rest_client=client,
-                                       host_institute=host_institute,
-                                       use_user_cache=use_user_cache)
-        user.dry_run = options.dry_run
+        user = VscTier2AccountpageUser(
+            vsc_id,
+            rest_client=client,
+            host_institute=host_institute,
+            use_user_cache=use_user_cache)
+        user.dry_run = dry_run
 
         try:
             if storage_name == VSC_HOME:
