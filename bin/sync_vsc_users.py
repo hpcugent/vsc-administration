@@ -138,12 +138,12 @@ class VscUserSync(Sync):
 
             for storage_name in self.options.storage:
                 (vos_ok, vos_fail) = process_vos(
-                    self.options,
                     vos,
                     storage_name,
                     self.apc,
                     self.start_timestamp,
-                    institute)
+                    institute,
+                    self.options.dry_run)
                 stats["%s_vos_sync" % (storage_name,)] = len(vos_ok)
                 stats["%s_vos_sync_fail" % (storage_name,)] = len(vos_fail)
                 stats["%s_vos_sync_fail_warning" % (storage_name,)] = STORAGE_VO_LIMIT_WARNING
