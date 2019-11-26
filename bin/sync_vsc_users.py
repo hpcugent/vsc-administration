@@ -29,19 +29,12 @@ The script should result in an idempotent execution, to ensure nothing breaks.
 """
 
 import logging
-import sys
 
-from vsc.accountpage.sync import Sync, SyncError
-from vsc.accountpage.client import AccountpageClient
-from vsc.accountpage.wrappers import mkVscUserSizeQuota
+from vsc.accountpage.sync import Sync
 from vsc.administration.user import process_users, process_users_quota
 from vsc.administration.vo import process_vos
 from vsc.config.base import GENT
 from vsc.utils import fancylogger
-from vsc.utils.missing import nub
-from vsc.utils.nagios import NAGIOS_EXIT_CRITICAL
-from vsc.utils.script_tools import ExtendedSimpleOption
-from vsc.utils.timestamp import convert_timestamp, write_timestamp, retrieve_timestamp_with_default
 
 NAGIOS_HEADER = "sync_vsc_users"
 NAGIOS_CHECK_INTERVAL_THRESHOLD = 15 * 60  # 15 minutes
@@ -89,11 +82,6 @@ class VscUserSync(Sync):
         """
 
         stats = {}
-
-        #(last_timestamp, start_time) = retrieve_timestamp_with_default(
-            #SYNC_TIMESTAMP_FILENAME,
-            #start_timestamp=self.options.start_timestamp)
-
         institute = self.options.host_institute
 
         (users_ok, users_fail) = ([], [])
