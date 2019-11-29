@@ -21,7 +21,7 @@ import mock
 
 from collections import namedtuple
 
-from vsc.administration.tools import create_stat_directory
+from vsc.filesystem.posix import create_stat_directory
 from vsc.install.testing import TestCase
 
 

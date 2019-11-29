@@ -36,7 +36,7 @@ PACKAGE = {
         'vsc-accountpage-clients >= 1.2.0',
         'vsc-base >= 2.8.3',
         'vsc-config >= 2.6.0',
-        'vsc-filesystems >= 0.19',
+        'vsc-filesystems >= 0.40.0',
         'vsc-ldap >= 1.1',
         'pytz',
         'python-ldap',
