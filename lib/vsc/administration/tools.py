@@ -20,9 +20,6 @@ Original Perl code by Stijn De Weirdt
 @author: Andy Georges (Ghent University)
 """
 
-import logging
-from os import stat as os_stat
-import stat
 
 TIER1_GRACE_GROUP_SUFFIX = "t1_mukgraceusers"
 TIER1_HELPDESK_ADDRESS = "tier1@ugent.be"
