@@ -352,7 +352,7 @@ class VscAccountPageUserTest(TestCase):
             mock_client = mock.MagicMock()
             test_account = mkVscAccount(account)
             accountpageuser = user.VscAccountPageUser(
-                test_account.vsc_id, 
+                test_account.vsc_id,
                 rest_client=mock_client,
                 account=test_account)
 
@@ -417,10 +417,10 @@ class VscTier2AccountpageUserTest(TestCase):
             mock_client.account[test_account.vsc_id].quota.get.return_value = (200, quota)
 
             accountpageuser = user.VscTier2AccountpageUser(
-                test_account.vsc_id, 
+                test_account.vsc_id,
                 storage=config.VscStorage(),
                 rest_client=mock_client,
-                account=test_account, 
+                account=test_account,
                 host_institute=site)
 
             self.assertEqual(
@@ -442,8 +442,6 @@ class UserDeploymentTest(TestCase):
     def test_process_regular_users(self, mock_client):
 
         test_accounts = [(['vsc40075', 'vsc40123', 'vsc40039'], GENT), (['vsc10001'], BRUSSEL)]
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mock_client.return_value = mock.MagicMock()
 
@@ -455,7 +453,7 @@ class UserDeploymentTest(TestCase):
                         mock_user.return_value = mock.MagicMock()
                         mock_user_instance = mock_user.return_value
 
-                        user.process_users(options, accounts, storage_name, mock_client, host_institute=site)
+                        user.process_users(accounts, storage_name, mock_client, host_institute=site, dry_run=False)
 
                         mock_user_instance.set_scratch_quota.assert_not_called()
                         mock_user_instance.set_home_quota.assert_not_called()
@@ -495,10 +493,10 @@ class UserDeploymentTest(TestCase):
         for account, site in test_accounts:
             test_account = mkVscAccount(account)
             accountpageuser = user.VscTier2AccountpageUser(
-                test_account.vsc_id, 
+                test_account.vsc_id,
                 storage=config.VscStorage(),
                 rest_client=mock_client,
-                account=test_account, 
+                account=test_account,
                 host_institute=site)
             accountpageuser.create_home_dir()
 
@@ -511,10 +509,10 @@ class UserDeploymentTest(TestCase):
         for account, site in test_accounts:
             test_account = mkVscAccount(account)
             accountpageuser = user.VscTier2AccountpageUser(
-                test_account.vsc_id, 
+                test_account.vsc_id,
                 storage=config.VscStorage(),
                 rest_client=mock_client,
-                account=test_account, 
+                account=test_account,
                 host_institute=site)
             accountpageuser.create_data_dir()
 
@@ -527,10 +525,10 @@ class UserDeploymentTest(TestCase):
         for account, site in test_accounts:
             test_account = mkVscAccount(account)
             accountpageuser = user.VscTier2AccountpageUser(
-                test_account.vsc_id, 
+                test_account.vsc_id,
                 storage=config.VscStorage(),
                 rest_client=mock_client,
-                account=test_account, 
+                account=test_account,
                 host_institute=site)
             accountpageuser.create_scratch_dir(VSC_PRODUCTION_SCRATCH[site][0])
 
@@ -539,9 +537,6 @@ class UserDeploymentTest(TestCase):
 
         TestQuota = namedtuple("TestQuota", ['user'])
         test_accounts = [(['vsc40075', 'vsc40123', 'vsc40039'], GENT), (['vsc10001'], BRUSSEL)]
-
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mock_client.return_value = mock.MagicMock()
 
@@ -554,7 +549,7 @@ class UserDeploymentTest(TestCase):
                     mock_user.return_value = mock.MagicMock()
                     mock_user_instance = mock_user.return_value
 
-                    user.process_users_quota(options, test_quota, storage_name, mock_client, host_institute=site)
+                    user.process_users_quota(test_quota, storage_name, mock_client, host_institute=site, dry_run=False)
 
                     if storage_name in (VSC_HOME,):
                         self.assertEqual(mock_user_instance.set_home_quota.called, True)

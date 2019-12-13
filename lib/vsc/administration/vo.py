@@ -30,7 +30,7 @@ from urllib2 import HTTPError
 
 from vsc.accountpage.wrappers import mkVo, mkVscVoSizeQuota, mkVscAccount, mkVscAutogroup
 from vsc.administration.user import VscTier2AccountpageUser, UserStatusUpdateError
-from vsc.config.base import VSC, VscStorage, VSC_HOME, VSC_DATA, VSC_DATA_SHARED, GENT_PRODUCTION_SCRATCH
+from vsc.config.base import VSC, VscStorage, VSC_HOME, VSC_DATA, VSC_DATA_SHARED, VSC_PRODUCTION_SCRATCH
 from vsc.config.base import NEW, MODIFIED, MODIFY, ACTIVE, GENT, DATA_KEY, SCRATCH_KEY
 from vsc.filesystem.gpfs import GpfsOperations, GpfsOperationError, PosixOperations
 from vsc.utils.missing import Monoid, MonoidDict
@@ -514,7 +514,7 @@ def update_vo_status(vo, client):
                                         (vo.vo_id, virtual_organisation.status))
 
 
-def process_vos(options, vo_ids, storage_name, client, datestamp, host_institute=None):
+def process_vos(vo_ids, storage_name, client, datestamp, host_institute=None, dry_run=False):
     """Process the virtual organisations.
 
     - make the fileset per VO
@@ -529,7 +529,7 @@ def process_vos(options, vo_ids, storage_name, client, datestamp, host_institute
     for vo_id in sorted(vo_ids):
 
         vo = VscTier2AccountpageVo(vo_id, rest_client=client)
-        vo.dry_run = options.dry_run
+        vo.dry_run = dry_run
 
         try:
             if storage_name in [VSC_HOME]:
@@ -548,7 +548,7 @@ def process_vos(options, vo_ids, storage_name, client, datestamp, host_institute
                 logging.info("Not deploying default VO %s members" % (vo_id,))
                 continue
 
-            if storage_name in GENT_PRODUCTION_SCRATCH:
+            if storage_name in VSC_PRODUCTION_SCRATCH[host_institute]:
                 vo.create_scratch_fileset(storage_name)
                 vo.set_scratch_quota(storage_name)
 
@@ -557,20 +557,21 @@ def process_vos(options, vo_ids, storage_name, client, datestamp, host_institute
                 continue
 
             modified_member_list = client.vo[vo.vo_id].member.modified[datestamp].get()
-            factory = lambda vid: VscTier2AccountpageUser(vid,
-                                                          rest_client=client,
-                                                          host_institute=host_institute,
-                                                          use_user_cache=True)
+            factory = lambda vid: VscTier2AccountpageUser(
+                vid,
+                rest_client=client,
+                host_institute=host_institute,
+                use_user_cache=True)
             modified_members = [factory(a["vsc_id"]) for a in modified_member_list[1]]
 
             for member in modified_members:
                 try:
-                    member.dry_run = options.dry_run
+                    member.dry_run = dry_run
                     if storage_name in [VSC_DATA]:
                         vo.set_member_data_quota(member)  # half of the VO quota
                         vo.create_member_data_dir(member)
 
-                    if storage_name in GENT_PRODUCTION_SCRATCH:
+                    if storage_name in VSC_PRODUCTION_SCRATCH[host_institute]:
                         vo.set_member_scratch_quota(storage_name, member)  # half of the VO quota
                         vo.create_member_scratch_dir(storage_name, member)
 

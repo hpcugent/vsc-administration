@@ -28,7 +28,7 @@ import vsc.administration.vo as vo
 import vsc.config.base as config
 
 from vsc.accountpage.wrappers import VscAutogroup
-from vsc.config.base import VSC_DATA, VSC_HOME, GENT_PRODUCTION_SCRATCH, VSC_DATA_SHARED
+from vsc.config.base import VSC_DATA, VSC_HOME, GENT_PRODUCTION_SCRATCH, VSC_DATA_SHARED, GENT
 from vsc.install.testing import TestCase
 
 
@@ -47,8 +47,6 @@ class VoDeploymentTest(TestCase):
         """Test to see if the VscTier2AccountpageVo class is used properly"""
 
         test_vo_id = "gvo00002"
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mc = mock_client.return_value
         mc.vo = mock.MagicMock()
@@ -85,7 +83,7 @@ class VoDeploymentTest(TestCase):
                                             with mock.patch.object(vo.VscTier2AccountpageVo, 'set_member_scratch_quota') as mock_s_m_s_quota:
                                                 with mock.patch.object(vo.VscTier2AccountpageVo, 'create_member_scratch_dir') as mock_cr_m_s_dir:
                                                     mock_user.return_value = mock.MagicMock()
-                                                    ok, errors = vo.process_vos(options, [test_vo_id], storage_name, mc, date)
+                                                    ok, errors = vo.process_vos([test_vo_id], storage_name, mc, date, GENT, False)
                                                     self.assertEqual(errors, {})
 
                                                     if storage_name in (VSC_HOME, VSC_DATA):
@@ -117,8 +115,6 @@ class VoDeploymentTest(TestCase):
     def test_process_non_gent_institute_vos(self, mock_storage, mock_client):
 
         test_vo_id = "gvo00018"
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mc = mock_client.return_value
         mc.vo = mock.MagicMock()
@@ -156,7 +152,7 @@ class VoDeploymentTest(TestCase):
                                                 with mock.patch.object(vo.VscTier2AccountpageVo, 'create_member_scratch_dir') as mock_cr_m_s_dir:
 
                                                     mock_user.return_value = mock.MagicMock()
-                                                    ok, errors = vo.process_vos(options, [test_vo_id], storage_name, mc, "99991231")
+                                                    ok, errors = vo.process_vos([test_vo_id], storage_name, mc, "99991231", GENT, False)
                                                     self.assertEqual(errors, {})
 
                                                     if storage_name in (VSC_HOME, VSC_DATA):
@@ -185,8 +181,6 @@ class VoDeploymentTest(TestCase):
     def test_process_gent_institute_vo(self, mock_storage, mock_client):
 
         test_vo_id = "gvo00012"
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mc = mock_client.return_value
         mc.vo = mock.MagicMock()
@@ -224,7 +218,7 @@ class VoDeploymentTest(TestCase):
                                                 with mock.patch.object(vo.VscTier2AccountpageVo, 'create_member_scratch_dir') as mock_cr_m_s_dir:
 
                                                     mock_user.return_value = mock.MagicMock()
-                                                    ok, errors = vo.process_vos(options, [test_vo_id], storage_name, mc, "99991231")
+                                                    ok, errors = vo.process_vos([test_vo_id], storage_name, mc, "99991231", GENT, False)
                                                     self.assertEqual(errors, {})
 
                                                     mock_cr_s_fileset.assert_not_called()
@@ -242,8 +236,6 @@ class VoDeploymentTest(TestCase):
     def test_process_gent_institute_vo_data_share(self, mock_storage, mock_client):
 
         test_vo_id = "gvo03442"
-        Options = namedtuple("Options", ['dry_run'])
-        options = Options(dry_run=False)
 
         mc = mock_client.return_value
         mc.vo = mock.MagicMock()
@@ -274,7 +266,7 @@ class VoDeploymentTest(TestCase):
                                             members=['vsc40075'],
                                             description="test autogroup"
                                         )
-                                        ok, errors = vo.process_vos(options, [test_vo_id], storage_name, mc, "99991231")
+                                        ok, errors = vo.process_vos([test_vo_id], storage_name, mc, "99991231", GENT, False)
                                         self.assertEqual(errors, {})
 
                                         mock_cr_s_fileset.assert_not_called()
@@ -297,7 +289,7 @@ class VoDeploymentTest(TestCase):
         mc.vo = mock.MagicMock()
         v = mock.MagicMock()
         mc.vo[test_vo_id].get.return_value = v
-    
+
 
         with mock.patch('vsc.administration.vo.mkVscAccount') as mock_mkvscaccount:
             mock_mkvscaccount.side_effect = IndexError("Nope")
