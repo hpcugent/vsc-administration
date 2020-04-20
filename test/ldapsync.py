@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Ghent University
+# Copyright 2015-2020 Ghent University
 #
 # This file is part of vsc-administration,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -20,7 +20,7 @@ Tests for vsc.administration.user
 """
 import mock
 
-from urllib2 import HTTPError
+from vsc.utils.py2vs3 import HTTPError
 
 import vsc
 
