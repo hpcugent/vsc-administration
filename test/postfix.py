@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2019-2020 Ghent University
+# Copyright 2020-2020 Ghent University
 #
 # This file is part of vsc-administration,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -14,11 +14,17 @@
 # All rights reserved.
 #
 """
-This script creates the list of canonical email adresses for VSC users.
+Tests for the postfix email address sync
 """
-from __future__ import print_function
 
-from vsc.administration.postfix import VscPostfixSync
+from vsc.install.testing import TestCase
 
-if __name__ == '__main__':
-    VscPostfixSync().main()
+
+
+class PostfixSyncTest(TestCase):
+    """
+    Test the sync.
+    """
+
+    def test_sync(self):
+        pass
