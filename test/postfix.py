@@ -15,7 +15,7 @@
 """
 Tests for the postfix email address sync
 """
-
+import mock
 
 from collections import namedtuple
 from vsc.install.testing import TestCase
@@ -47,7 +47,7 @@ class PostfixSyncTest(TestCase):
     @mock.patch(vsc.administration.postfix.Sync)
     def test_sync(self, mock_sync):
         open_name = '%s.open' % __name__
-        canonical_file = MagicMock(spec=file)
+        canonical_file = mock.MagicMock(spec=file)
         with patch(open_name, create=True) as mock_open:
             mock_open.return_value = canonical_file
             canonical_file.read_lines.return_value = CANONICAL_DB
