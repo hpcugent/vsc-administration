@@ -62,7 +62,6 @@ class VscPostfixSync(Sync):
 
         if dry_run:
             logging.info("Dry run. File contents:\n%s" % txt)
-            print(txt)
         else:
             with open(self.options.postfix_canonical_map, 'w') as cm:
                 cm.write(txt)
