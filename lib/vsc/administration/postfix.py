@@ -17,6 +17,8 @@
 Class to facilitate syncing VSC user email addresses
 """
 
+import logging
+
 from vsc.accountpage.sync import Sync
 
 
