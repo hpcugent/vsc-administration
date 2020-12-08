@@ -56,16 +56,19 @@ class SlurmSyncTest(TestCase):
         """Test that the commands to create, change and remove users are correctly generated."""
         vo_members = {
             "vo1": (set(["user1", "user2", "user3"]), VO(vsc_id="vo1", institute={"name": "gent"})),
-            "vo2": (set(["user4", "user5", "user6"]), VO(vsc_id="vo2", institute={"name": "gent"})),
+            "vo2": (set(["user4", "user5", "user6", "user7", "user8"]), VO(vsc_id="vo2", institute={"name": "gent"})),
         }
 
-        active_accounts = set(["user1", "user3", "user4", "user5", "user6", "user7"])
+        active_accounts = set(["user1", "user3", "user4", "user5", "user6", "user7", "user8"])
         slurm_user_info = [
             SlurmUser(User='user1', Def_Acct='vo1', Admin='None', Cluster='banette', Account='vo1', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
             SlurmUser(User='user2', Def_Acct='vo1', Admin='None', Cluster='banette', Account='vo1', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
             SlurmUser(User='user3', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo2', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
             SlurmUser(User='user4', Def_Acct='vo1', Admin='None', Cluster='banette', Account='vo1', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
             SlurmUser(User='user5', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo2', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
+            SlurmUser(User='user7', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo2', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
+            SlurmUser(User='user8', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo2', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
+            SlurmUser(User='user8', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo1', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
         ]
 
         commands = slurm_user_accounts(vo_members, active_accounts, slurm_user_info, ["banette"])
@@ -77,6 +80,7 @@ class SlurmSyncTest(TestCase):
             shlex.split("/usr/bin/sacctmgr -i delete user name=user3 Account=vo2 where Cluster=banette"),
             shlex.split("/usr/bin/sacctmgr -i add user user4 Account=vo2 DefaultAccount=vo2 Cluster=banette"),
             shlex.split("/usr/bin/sacctmgr -i delete user name=user4 Account=vo1 where Cluster=banette"),
+            shlex.split("/usr/bin/sacctmgr -i delete user name=user8 Account=vo1 where Cluster=banette"),
         ]]))
 
 
