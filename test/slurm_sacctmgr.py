@@ -23,6 +23,7 @@ from vsc.install.testing import TestCase
 from vsc.administration.slurm.sacctmgr import (
     parse_slurm_sacct_dump, SlurmActivejobs,
     SacctMgrTypes, SlurmAccount, SlurmUser,
+    SacctParseException
     )
 
 
@@ -82,3 +83,7 @@ class SlurmSacctmgrTest(TestCase):
             SlurmActivejobs(JobID='14367800.batch', JobName='batch', Partition='', Account='acc1', AllocCPUS='1', State='RUNNING', ExitCode='0:0'),
             SlurmActivejobs(JobID='14367800.extern', JobName='extern', Partition='', Account='acc1', AllocCPUS='1', State='RUNNING', ExitCode='0:0')
         ]))
+
+
+        with self.assertRaises(SacctParseException):
+            parse_slurm_sacct_dump("sacctmgr_active_jobs_output", "doesnotexist")

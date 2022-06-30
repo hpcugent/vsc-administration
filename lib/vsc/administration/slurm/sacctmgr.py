@@ -38,6 +38,9 @@ SLURM_ORGANISATIONS = {
 class SacctMgrException(Exception):
     pass
 
+class SacctParseException(Exception):
+    pass
+
 
 class SacctMgrTypes(Enum):
     accounts = "accounts"
@@ -155,7 +158,7 @@ def parse_slurm_sacct_line(header, line, info_type, user_field_number, account_f
     elif info_type == SacctMgrTypes.activejobs:
         creator = mkSlurmActivejobs
     else:
-        return None
+        raise SacctParseException("info_type %s does not exist.", info_type)
 
     return creator(dict(zip(header, fields)))
 
