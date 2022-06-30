@@ -176,7 +176,8 @@ def main():
             logging.debug("Would execute the following remove commands:")
             for jc in association_remove_commands:
                 logging.debug("%s", jc)
-            raise SyncSanityError("Would run %d user delete commands per cluster" % (len(association_remove_commands) / len(clusters)))
+            raise SyncSanityError("Would run %d user delete commands per cluster" %
+                                  (len(association_remove_commands) / len(clusters)))
 
         # removing users may fail, so should be done last
         sacctmgr_commands += association_remove_commands
