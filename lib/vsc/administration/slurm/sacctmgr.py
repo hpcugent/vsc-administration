@@ -16,14 +16,12 @@
 sacctmgr commands
 """
 import logging
-import re
 from enum import Enum
 
 from vsc.accountpage.wrappers import mkNamedTupleInstance
 from vsc.config.base import ANTWERPEN, BRUSSEL, GENT, LEUVEN
 from vsc.utils.missing import namedtuple_with_defaults
 from vsc.utils.run import asyncloop
-
 from vsc.administration.slurm.scancel import create_remove_user_jobs_command
 
 SLURM_SACCT_MGR = "/usr/bin/sacctmgr"
@@ -41,7 +39,7 @@ class SacctMgrException(Exception):
     pass
 
 
-class SacctParseException(Exception):
+class SacctMgrParseException(Exception):
     pass
 
 
@@ -50,7 +48,6 @@ class SacctMgrTypes(Enum):
     users = "users"
     qos = "qos"
     resource = "resource"
-    activejobs = "activejobs"
 
 
 # Fields for Slurm 20.11.
@@ -81,10 +78,6 @@ SacctResourceFields = [
     "Name", "Server", "Type", "Count", "PCT__Allocated", "ServerType",
 ]
 
-SacctActivejobsFields = [
-    "JobID", "JobName", "Partition", "Account", "AllocCPUS", "State", "ExitCode",
-]
-
 IGNORE_USERS = ["root"]
 IGNORE_ACCOUNTS = ["root"]
 IGNORE_QOS = ["normal"]
@@ -93,7 +86,6 @@ SlurmAccount = namedtuple_with_defaults('SlurmAccount', SacctAccountFields)
 SlurmUser = namedtuple_with_defaults('SlurmUser', SacctUserFields)
 SlurmQos = namedtuple_with_defaults('SlurmQos', SacctQosFields)
 SlurmResource = namedtuple_with_defaults('SlurmResource', SacctResourceFields)
-SlurmActivejobs = namedtuple_with_defaults('SlurmActivejobs', SacctActivejobsFields)
 
 
 def mkSlurmAccount(fields):
@@ -116,12 +108,6 @@ def mkSlurmQos(fields):
     """Make a named tuple from the given fields"""
     qos = mkNamedTupleInstance(fields, SlurmQos)
     return qos
-
-
-def mkSlurmActivejobs(fields):
-    """Make a named tuple from the given fields"""
-    activejobs = mkNamedTupleInstance(fields, SlurmActivejobs)
-    return activejobs
 
 
 def mkSlurmResource(fields):
@@ -158,10 +144,8 @@ def parse_slurm_sacct_line(header, line, info_type, user_field_number, account_f
         creator = mkSlurmQos
     elif info_type == SacctMgrTypes.resource:
         creator = mkSlurmResource
-    elif info_type == SacctMgrTypes.activejobs:
-        creator = mkSlurmActivejobs
     else:
-        raise SacctParseException("info_type %s does not exist.", info_type)
+        raise SacctMgrParseException("info_type %s does not exist.", info_type)
 
     return creator(dict(zip(header, fields)))
 
@@ -534,20 +518,3 @@ def create_modify_resource_license_command(name, server, stype, clusters, count)
     ]
 
     return command
-
-
-def get_slurm_sacct_active_jobs_for_user(user):
-    """
-    Get running and queued jobs for user.
-    """
-    (exitcode, contents) = asyncloop([SLURM_SACCT, "-L", "-P", "-s", "r", "-u", user])
-    if exitcode != 0:
-        if re.search("sacct: error: Invalid user id: %s" % user, contents):
-            logging.warning("User %s does not exist, assuming no active jobs.", user)
-            return None
-        else:
-            raise SacctMgrException("Cannot run sacct")
-
-    info = parse_slurm_sacct_dump(contents.splitlines(), SacctActivejobsFields)
-    return info
-

@@ -25,12 +25,12 @@ from vsc.administration.slurm.sacctmgr import (
     create_add_account_command, create_remove_account_command,
     create_change_account_fairshare_command,
     create_add_user_command, create_change_user_command, create_remove_user_command, create_remove_user_account_command,
-    create_add_qos_command, create_remove_qos_command, create_modify_qos_command, get_slurm_sacct_active_jobs_for_user,
+    create_add_qos_command, create_remove_qos_command, create_modify_qos_command,
     )
 from vsc.administration.slurm.scancel import (
     create_remove_user_jobs_command, create_remove_jobs_for_account_command,
     )
-
+from vsc.administration.slurm.sacct import get_slurm_sacct_active_jobs_for_user
 
 class SlurmSyncException(Exception):
     pass

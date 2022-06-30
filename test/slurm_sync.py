@@ -208,7 +208,7 @@ class SlurmSyncTestGent(TestCase):
             SlurmUser(User='user5', Def_Acct='vo2', Admin='None', Cluster='banette', Account='vo2', Partition='', Share='1', MaxJobs='', MaxNodes='', MaxCPUs='', MaxSubmit='', MaxWall='', MaxCPUMins='', QOS='normal', Def_QOS=''),
         ]
 
-        with patch("vsc.administration.slurm.sacctmgr.get_slurm_sacct_active_jobs_for_user", return_value="testing"):
+        with patch("vsc.administration.slurm.sacct.get_slurm_sacct_active_jobs_for_user", return_value="testing"):
             (job_cancel_commands, commands, remove_user_commands) = slurm_user_accounts(vo_members, active_accounts, slurm_user_info, ["banette"])
 
         self.assertEqual(set([tuple(x) for x in commands]), set([tuple(x) for x in [

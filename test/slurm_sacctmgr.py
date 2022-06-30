@@ -21,9 +21,9 @@ Tests for vsc.administration.slurm.*
 from vsc.install.testing import TestCase
 
 from vsc.administration.slurm.sacctmgr import (
-    parse_slurm_sacct_dump, SlurmActivejobs,
+    parse_slurm_sacct_dump,
     SacctMgrTypes, SlurmAccount, SlurmUser,
-    SacctParseException
+    SacctMgrParseException
     )
 
 
@@ -71,19 +71,5 @@ class SlurmSacctmgrTest(TestCase):
 
 
 
-        sacctmgr_active_jobs_output = [
-            "JobID|JobName|Partition|Account|AllocCPUS|State|ExitCode",
-            "14367800|normal|part1|acc1|1|RUNNING|0:0",
-            "14367800.batch|batch||acc1|1|RUNNING|0:0",
-            "14367800.extern|extern||acc1|1|RUNNING|0:0",
-        ]
-        info = parse_slurm_sacct_dump(sacctmgr_active_jobs_output, SacctMgrTypes.activejobs)
-        self.assertEqual(set(info), set([
-            SlurmActivejobs(JobID='14367800', JobName='normal', Partition='part1', Account='acc1', AllocCPUS='1', State='RUNNING', ExitCode='0:0'),
-            SlurmActivejobs(JobID='14367800.batch', JobName='batch', Partition='', Account='acc1', AllocCPUS='1', State='RUNNING', ExitCode='0:0'),
-            SlurmActivejobs(JobID='14367800.extern', JobName='extern', Partition='', Account='acc1', AllocCPUS='1', State='RUNNING', ExitCode='0:0')
-        ]))
-
-
-        with self.assertRaises(SacctParseException):
+        with self.assertRaises(SacctMgrParseException):
             parse_slurm_sacct_dump("sacctmgr_active_jobs_output", "doesnotexist")
