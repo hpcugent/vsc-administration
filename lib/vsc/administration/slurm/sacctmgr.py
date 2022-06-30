@@ -25,7 +25,6 @@ from vsc.utils.run import asyncloop
 from vsc.administration.slurm.scancel import create_remove_user_jobs_command
 
 SLURM_SACCT_MGR = "/usr/bin/sacctmgr"
-SLURM_SACCT = "/usr/bin/sacct"
 
 SLURM_ORGANISATIONS = {
     ANTWERPEN: 'uantwerpen',
