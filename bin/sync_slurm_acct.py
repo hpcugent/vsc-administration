@@ -40,8 +40,6 @@ NAGIOS_CHECK_INTERVAL_THRESHOLD = 60 * 60  # 60 minutes
 SYNC_TIMESTAMP_FILENAME = "/var/cache/%s.timestamp" % (NAGIOS_HEADER)
 SYNC_SLURM_ACCT_LOGFILE = "/var/log/%s.log" % (NAGIOS_HEADER)
 
-MAX_USERS_JOB_CANCEL = 10
-
 class SyncSanityError(Exception):
     pass
 
@@ -75,6 +73,7 @@ def main():
             'store',
             [PRODUCTION, PILOT]
         ),
+        'limit_cancel': ('Limit of scancel commands allowed', int, 'store', 10),
         'force': (
             'Force the sync instead of bailing if too many scancel commands would be issues',
             None,
@@ -154,7 +153,7 @@ def main():
         sacctmgr_commands = []
 
         # safety to avoid emptying the cluster due to some error upstream
-        if not opts.options.force and len(job_cancel_commands) > MAX_USERS_JOB_CANCEL:
+        if not opts.options.force and len(job_cancel_commands) > opts.options.limit_cancel:
             logging.warning("Would add commands to cancel jobs for %d users", len(job_cancel_commands))
             logging.debug("Would execute the following cancel commands:")
             for jc in job_cancel_commands.values():
