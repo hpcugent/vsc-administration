@@ -16,6 +16,7 @@
 sacctmgr commands
 """
 import logging
+import re
 from enum import Enum
 
 from vsc.accountpage.wrappers import mkNamedTupleInstance
@@ -26,6 +27,7 @@ from vsc.utils.run import asyncloop
 from vsc.administration.slurm.scancel import create_remove_user_jobs_command
 
 SLURM_SACCT_MGR = "/usr/bin/sacctmgr"
+SLURM_SACCT = "/usr/bin/sacct"
 
 SLURM_ORGANISATIONS = {
     ANTWERPEN: 'uantwerpen',
@@ -37,6 +39,7 @@ SLURM_ORGANISATIONS = {
 
 class SacctMgrException(Exception):
     pass
+
 
 class SacctParseException(Exception):
     pass
@@ -537,9 +540,13 @@ def get_slurm_sacct_active_jobs_for_user(user):
     """
     Get running and queued jobs for user.
     """
-    (exitcode, contents) = asyncloop([SLURM_SACCT_MGR,"-L", "-P", "-s", "r", "-u", user])
+    (exitcode, contents) = asyncloop([SLURM_SACCT, "-L", "-P", "-s", "r", "-u", user])
     if exitcode != 0:
-        raise SacctMgrException("Cannot run sacctmgr")
+        if re.search("sacct: error: Invalid user id: %s" % user, contents):
+            logging.warning("User %s does not exist, assuming no active jobs.", user)
+            return None
+        else:
+            raise SacctMgrException("Cannot run sacct")
 
     info = parse_slurm_sacct_dump(contents.splitlines(), SacctActivejobsFields)
     return info
