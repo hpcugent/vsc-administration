@@ -25,12 +25,12 @@ from vsc.administration.slurm.sacctmgr import (
     create_add_account_command, create_remove_account_command,
     create_change_account_fairshare_command,
     create_add_user_command, create_change_user_command, create_remove_user_command, create_remove_user_account_command,
-    create_add_qos_command, create_remove_qos_command, create_modify_qos_command
+    create_add_qos_command, create_remove_qos_command, create_modify_qos_command,
     )
 from vsc.administration.slurm.scancel import (
     create_remove_user_jobs_command, create_remove_jobs_for_account_command,
     )
-
+from vsc.administration.slurm.sacct import get_slurm_sacct_active_jobs_for_user
 
 class SlurmSyncException(Exception):
     pass
@@ -372,7 +372,9 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
         ])
 
         for user in remove_users:
-            job_cancel_commands[user].append(create_remove_user_jobs_command(user=user, cluster=cluster))
+            active_jobs = get_slurm_sacct_active_jobs_for_user(user)
+            if active_jobs:
+                job_cancel_commands[user].append(create_remove_user_jobs_command(user=user, cluster=cluster))
 
         # Remove users from the clusters (in all accounts)
         association_remove_commands.extend([

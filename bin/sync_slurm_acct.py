@@ -39,8 +39,6 @@ NAGIOS_CHECK_INTERVAL_THRESHOLD = 60 * 60  # 60 minutes
 SYNC_TIMESTAMP_FILENAME = "/var/cache/%s.timestamp" % (NAGIOS_HEADER)
 SYNC_SLURM_ACCT_LOGFILE = "/var/log/%s.log" % (NAGIOS_HEADER)
 
-MAX_USERS_JOB_CANCEL = 10
-
 class SyncSanityError(Exception):
     pass
 
@@ -74,8 +72,16 @@ def main():
             'store',
             [PRODUCTION, PILOT]
         ),
-        'force': (
-            'Force the sync instead of bailing if too many scancel commands would be issues',
+        'max_scancel': ('Limit of scancel commands allowed', int, 'store', 20),
+        'max_user_del': ('Limit of user delete commands allowed', int, 'store', 10),
+        'force_scancel': (
+            'Force the sync instead of bailing if too many scancel commands would be issued',
+            None,
+            'store_true',
+            False
+        ),
+        'force_user_del': (
+            'Force the sync instead of bailing if too many user delete commands would be issued',
             None,
             'store_true',
             False
@@ -153,14 +159,24 @@ def main():
         sacctmgr_commands = []
 
         # safety to avoid emptying the cluster due to some error upstream
-        if not opts.options.force and len(job_cancel_commands) > MAX_USERS_JOB_CANCEL:
-            logging.warning("Would add commands to cancel jobs for %d users", len(job_cancel_commands))
+        if not opts.options.force_scancel and len(job_cancel_commands) > (opts.options.max_scancel / len(clusters)):
+            logging.warning("Would add %s scancel commands per cluster", len(job_cancel_commands) / len(clusters))
             logging.debug("Would execute the following cancel commands:")
             for jc in job_cancel_commands.values():
                 logging.debug("%s", jc)
-            raise SyncSanityError("Would cancel jobs for %d users" % len(job_cancel_commands))
+            raise SyncSanityError("Would run %d scancel jobs per cluster" % len(job_cancel_commands) / len(clusters))
 
         sacctmgr_commands += [c for cl in job_cancel_commands.values() for c in cl]
+
+        # safety to avoid removing too many users due to some error upstream
+        max_user_del = opts.options.max_user_del / len(clusters)
+        if not opts.options.force_user_del and len(association_remove_commands) > max_user_del:
+            logging.warning("Would add commands to remove %d users", len(association_remove_commands) / len(clusters))
+            logging.debug("Would execute the following remove commands:")
+            for jc in association_remove_commands:
+                logging.debug("%s", jc)
+            raise SyncSanityError("Would run %d user delete commands per cluster" %
+                                  (len(association_remove_commands) / len(clusters)))
 
         # removing users may fail, so should be done last
         sacctmgr_commands += association_remove_commands

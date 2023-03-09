@@ -22,7 +22,6 @@ from vsc.accountpage.wrappers import mkNamedTupleInstance
 from vsc.config.base import ANTWERPEN, BRUSSEL, GENT, LEUVEN
 from vsc.utils.missing import namedtuple_with_defaults
 from vsc.utils.run import asyncloop
-
 from vsc.administration.slurm.scancel import create_remove_user_jobs_command
 
 SLURM_SACCT_MGR = "/usr/bin/sacctmgr"
@@ -36,6 +35,10 @@ SLURM_ORGANISATIONS = {
 
 
 class SacctMgrException(Exception):
+    pass
+
+
+class SacctMgrParseException(Exception):
     pass
 
 
@@ -141,7 +144,7 @@ def parse_slurm_sacct_line(header, line, info_type, user_field_number, account_f
     elif info_type == SacctMgrTypes.resource:
         creator = mkSlurmResource
     else:
-        return None
+        raise SacctMgrParseException("info_type %s does not exist.", info_type)
 
     return creator(dict(zip(header, fields)))
 

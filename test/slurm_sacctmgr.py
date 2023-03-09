@@ -23,6 +23,7 @@ from vsc.install.testing import TestCase
 from vsc.administration.slurm.sacctmgr import (
     parse_slurm_sacct_dump,
     SacctMgrTypes, SlurmAccount, SlurmUser,
+    SacctMgrParseException
     )
 
 
@@ -69,3 +70,6 @@ class SlurmSacctmgrTest(TestCase):
         ]))
 
 
+
+        with self.assertRaises(SacctMgrParseException):
+            parse_slurm_sacct_dump("sacctmgr_active_jobs_output", "doesnotexist")
