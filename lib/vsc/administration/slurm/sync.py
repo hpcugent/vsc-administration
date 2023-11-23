@@ -116,11 +116,14 @@ def slurm_project_qos(projects, slurm_qos_info, clusters, protected_qos, qos_cle
             qos_name = f"{cluster}-{project.name}"
             if qos_name not in cluster_qos_names:
                 commands.append(create_add_qos_command(qos_name))
-            commands.append(create_modify_qos_command(qos_name, {
-                "GRPTRESMins": "billing={credits},gres/gpu={gpuminutes}".format(
-                    credits=60*int(project.credits),
-                    gpuminutes=max(1, 60*int(project.gpu_hours)))
+
+            try: 
+                commands.append(create_modify_qos_command(qos_name, {
+                    "GRPTRESMins": f"billing={60 * int(project.credits)},gres/gpu={max(1, 60 * int(project.hpu_hours or 0))}"
                 }))
+            except TypeError as err:
+                # This should not fail the script immediately.
+                logging.error(f"{project.name} cannot set QoS due to {err}")
 
             # TODO: if we pass a cutoff date, we need to alter the hours if less was spent
 
