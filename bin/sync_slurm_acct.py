@@ -24,6 +24,7 @@ import sys
 
 from vsc.accountpage.client import AccountpageClient
 from vsc.accountpage.wrappers import mkVo
+from vsc.accountpage.consts import MEMBER_ACTIVE_PARAM
 from vsc.administration.slurm.sacctmgr import get_slurm_sacct_info, SacctMgrTypes
 from vsc.administration.slurm.sync import (
     execute_commands, slurm_institute_accounts, slurm_vo_accounts, slurm_user_accounts,
@@ -110,8 +111,9 @@ def main():
             ]
         sacctmgr_commands = []
 
-        # All users belong to a VO, so fetching the VOs is necessary/
-        account_page_vos = [mkVo(v) for v in client.vo.institute[opts.options.host_institute].get()[1]]
+        # All users belong to a VO, so fetching the VOs is necessary. Filter so member contain
+        # only the active VSC accounts
+        account_page_vos = [mkVo(v) for v in client.vo.institute[opts.options.host_institute].get({MEMBER_ACTIVE_PARAM: 1})[1]]
 
         # make sure the institutes and the default accounts (VOs) are there for each cluster
         institute_vos = {
@@ -120,9 +122,6 @@ def main():
             if v.vsc_id in INSTITUTE_VOS_BY_INSTITUTE[host_institute].values()
         }
         sacctmgr_commands += slurm_institute_accounts(slurm_account_info, clusters, host_institute, institute_vos)
-
-        # The VOs do not track active state of users, so we need to fetch all accounts as well
-        active_accounts = {a["vsc_id"] for a in client.account.get()[1] if a["isactive"]}
 
         # dictionary mapping the VO vsc_id on a tuple with the VO members and the VO itself
         account_page_members = {vo.vsc_id: (set(vo.members), vo) for vo in account_page_vos}
@@ -133,7 +132,6 @@ def main():
         # process VO members
         (job_cancel_commands, user_commands, association_remove_commands) = slurm_user_accounts(
             account_page_members,
-            active_accounts,
             slurm_user_info,
             clusters,
             opts.options.dry_run

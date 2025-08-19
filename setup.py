@@ -23,7 +23,7 @@ from vsc.install import shared_setup
 from vsc.install.shared_setup import ag, jt, sdw, wdp
 
 install_requires = [
-    'vsc-accountpage-clients >= 2.1.6',
+    'vsc-accountpage-clients >= 2.3.6',
     'vsc-base >= 3.5.0',
     'vsc-config >= 3.13.4',
     'vsc-filesystems >= 1.3.0',
@@ -32,7 +32,7 @@ install_requires = [
 ]
 
 PACKAGE = {
-    'version': '4.10.0',
+    'version': '4.11.0',
     'author': [ag, jt, sdw, wdp],
     'maintainer': [ag],
     'tests_require': ['mock'],

@@ -336,7 +336,7 @@ def slurm_project_users_accounts(
     return commands
 
 
-def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, dry_run=False):
+def slurm_user_accounts(vo_members, slurm_user_info, clusters, dry_run=False):
     """Check for the presence of the user in his/her account.
 
     @returns: list of sacctmgr commands to add the users if needed.
@@ -349,7 +349,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
     reverse_vo_mapping = dict()
     for (members, vo) in vo_members.values():
         # basic set arithmetic: take the intersection of the RHS sets and make the union with the LHS set
-        active_vo_members |= members & active_accounts
+        active_vo_members |= members
 
         for m in members:
             reverse_vo_mapping[m] = (vo.vsc_id, vo.institute['name'])
@@ -380,7 +380,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
             # these are users not yet in the Slurm DB for this cluster
             new_users |= {
                 (user, vo.vsc_id, vo.institute['name'])
-                for user in (members & active_accounts) - cluster_users
+                for user in members - cluster_users
             }
 
             # these are the current Slurm users per Account, i.e., the VO currently being processed
@@ -389,7 +389,7 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
             # these are the users that should no longer be in this account, but should not be removed
             # we need to look up their new VO
             # Again, basic set arithmetic. LHS is the intersection of the people we have left and the active users
-            changed_users_vo = (slurm_acct_users - members) & active_accounts
+            changed_users_vo = slurm_acct_users - members
             changed_users |= changed_users_vo
 
             try:
