@@ -348,7 +348,6 @@ def slurm_user_accounts(vo_members, slurm_user_info, clusters, dry_run=False):
     active_vo_members = set()
     reverse_vo_mapping = dict()
     for (members, vo) in vo_members.values():
-        # basic set arithmetic: take the intersection of the RHS sets and make the union with the LHS set
         active_vo_members |= members
 
         for m in members:
@@ -364,11 +363,11 @@ def slurm_user_accounts(vo_members, slurm_user_info, clusters, dry_run=False):
 
         # these are the users that need to be completely removed as they are no longer an active user in any
         # (including the institute default) VO
-        remove_users_cluster = cluster_users - active_vo_members
-        remove_users |= remove_users_cluster
+        inactive_users_cluster = cluster_users - active_vo_members
+        remove_users |= inactive_users_cluster
 
-        # Removed users should no longer have running jobs.
-        for user in remove_users_cluster:
+        # inactive users should no longer have running jobs.
+        for user in inactive_users_cluster:
             job_cancel_commands[user].append(create_remove_user_jobs_command(user=user, cluster=cluster))
 
         new_users = set()
@@ -387,9 +386,9 @@ def slurm_user_accounts(vo_members, slurm_user_info, clusters, dry_run=False):
             slurm_acct_users = {user for (user, acct) in cluster_users_acct if acct == vo_id}
 
             # these are the users that should no longer be in this account, but should not be removed
-            # we need to look up their new VO. We remove the users which are nog longer active too.
-            # Again, basic set arithmetic. LHS is the intersection of the people we have left and the active users
-            changed_users_vo = slurm_acct_users - members - remove_users_cluster
+            # we need to look up their new VO. We skip all the inactive users whose accounts need to
+            # be deleted.
+            changed_users_vo = slurm_acct_users - members - inactive_users_cluster
             changed_users |= changed_users_vo
 
             try:
