@@ -387,9 +387,9 @@ def slurm_user_accounts(vo_members, slurm_user_info, clusters, dry_run=False):
             slurm_acct_users = {user for (user, acct) in cluster_users_acct if acct == vo_id}
 
             # these are the users that should no longer be in this account, but should not be removed
-            # we need to look up their new VO
+            # we need to look up their new VO. We remove the users which are nog longer active too.
             # Again, basic set arithmetic. LHS is the intersection of the people we have left and the active users
-            changed_users_vo = slurm_acct_users - members
+            changed_users_vo = slurm_acct_users - members - remove_users_cluster
             changed_users |= changed_users_vo
 
             try:
