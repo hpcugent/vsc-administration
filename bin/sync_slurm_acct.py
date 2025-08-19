@@ -114,7 +114,7 @@ def main():
         # All users belong to a VO, so fetching the VOs is necessary. Filter so member contain
         # only the active VSC accounts
         account_page_vos = [mkVo(v) for v in
-                            client.vo.institute[opts.options.host_institute].get({MEMBER_ACTIVE_PARAM: 1})[1]
+                            client.vo.institute[opts.options.host_institute].get(MEMBER_ACTIVE_PARAM=1)[1]
                            ]
 
         # make sure the institutes and the default accounts (VOs) are there for each cluster
