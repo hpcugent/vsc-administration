@@ -35,7 +35,7 @@ from vsc.accountpage.client import AccountpageClient
 from vsc.accountpage.wrappers import mkVscUserSizeQuota
 from vsc.administration.user import process_users, process_users_quota
 from vsc.administration.vo import process_vos
-from vsc.config.base import GENT
+from vsc.config.base import ACTIVE, GENT
 from vsc.utils.missing import nub
 from vsc.utils.nagios import NAGIOS_EXIT_CRITICAL
 from vsc.utils.script_tools import ExtendedSimpleOption
@@ -141,8 +141,8 @@ def main():
 
             vos = sorted(
                 set(
-                    [v["vsc_id"] for v in changed_vos if v["status"] == "active"]
-                    + [v["vsc_id"] for v in qvos if v["status"] == "active"]
+                    [v["vsc_id"] for v in changed_vos if v["status"] == ACTIVE]
+                    + [v["vsc_id"] for v in qvos if v["status"] == ACTIVE]
                 )
             )
 
