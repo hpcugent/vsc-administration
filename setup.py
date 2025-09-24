@@ -19,32 +19,33 @@ vsc-administration distribution setup.py
 @author: Andy Georges (Ghent University)
 @author: Jens Timmerman (Ghent University)
 """
+
 from vsc.install import shared_setup
 from vsc.install.shared_setup import ag, jt, sdw, wdp
 
 install_requires = [
-    'vsc-accountpage-clients >= 2.1.6',
-    'vsc-base >= 3.5.0',
-    'vsc-config >= 3.13.4',
-    'vsc-filesystems >= 1.3.0',
-    'vsc-utils >= 2.0.0',
-    'lockfile >= 0.9.1',
+    "vsc-accountpage-clients >= 2.1.6",
+    "vsc-base >= 3.5.0",
+    "vsc-config >= 3.13.4",
+    "vsc-filesystems >= 1.3.0",
+    "vsc-utils >= 2.0.0",
+    "lockfile >= 0.9.1",
 ]
 
 PACKAGE = {
-    'version': '4.10.0',
-    'author': [ag, jt, sdw, wdp],
-    'maintainer': [ag],
-    'tests_require': ['mock'],
-    'setup_requires': [
-        'vsc-install >= 0.15.3',
+    "version": "4.11.0",
+    "author": [ag, jt, sdw, wdp],
+    "maintainer": [ag],
+    "tests_require": ["mock"],
+    "setup_requires": [
+        "vsc-install >= 0.15.3",
     ],
-    'install_requires': install_requires,
-    'extras_require': {
-        'oceanstor': ['vsc-filesystem-oceanstor >= 0.6.0'],
+    "install_requires": install_requires,
+    "extras_require": {
+        "oceanstor": ["vsc-filesystem-oceanstor >= 0.6.0"],
     },
 }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     shared_setup.action_target(PACKAGE)
