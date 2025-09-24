@@ -137,9 +137,14 @@ def main():
         if opts.options.vo:
             changed_vos = client.vo.institute[institute].modified[last_timestamp].get()[1]
             changed_vo_quota = client.quota.vo.modified[last_timestamp].get()[1]
+            qvos = [client.vo[v["virtual_organisation"]].get()[1] for v in changed_vo_quota]
 
-            vos = sorted(set([v['vsc_id'] for v in changed_vos] +
-                             [v['virtual_organisation'] for v in changed_vo_quota]))
+            vos = sorted(
+                set(
+                    [v["vsc_id"] for v in changed_vos if v["status"] == "active"]
+                    + [v["vsc_id"] for v in qvos if v["status"] == "active"]
+                )
+            )
 
             logging.info("Found %d %s VOs that have changed in the accountpage since %s",
                         len(changed_vos), institute, last_timestamp)
