@@ -16,19 +16,20 @@
 """
 This script creates the list of canonical email adresses for VSC users.
 """
+
 import logging
 
 from vsc.accountpage.sync import Sync
 
 
 FIXED_VSCENTRUM_ALIASES = {
-    'compute@vscentrum.be': 'compute.vscentrum@ugent.be',
+    "compute@vscentrum.be": "compute.vscentrum@ugent.be",
 }
 
 
 class VscPostfixSync(Sync):
     CLI_OPTIONS = {
-        'postfix_canonical_map': ('Location of the postfix canonical map', None, 'store', '/etc/postfix/vsc_canonical'),
+        "postfix_canonical_map": ("Location of the postfix canonical map", None, "store", "/etc/postfix/vsc_canonical"),
     }
 
     def do(self, dry_run):
@@ -56,24 +57,24 @@ class VscPostfixSync(Sync):
         address_map = dict()
         try:
             with open(self.options.postfix_canonical_map) as cm:
-                address_map = dict(
-                    [tuple(l) for l in [l.split() for l in cm.readlines()] if l and l[0] not in inactive_emails]
-                )
+                address_map = dict([
+                    tuple(l) for l in [l.split() for l in cm.readlines()] if l and l[0] not in inactive_emails
+                ])
         except OSError as err:
             logging.warning("No canonical map at %s: %s", self.options.postfix_canonical_map, err)
 
         address_map.update(active_emails)
 
-        txt = "\n".join([f"%s %s" % kv for kv in address_map.items()] + [''])
+        txt = "\n".join([f"%s %s" % kv for kv in address_map.items()] + [""])
 
         if dry_run:
             logging.info("Dry run. File contents:\n%s", txt)
             print(txt)
         else:
-            with open(self.options.postfix_canonical_map, 'w') as cm:
+            with open(self.options.postfix_canonical_map, "w") as cm:
                 cm.write(txt)
                 logging.info("File %s written. %d entries.", self.options.postfix_canonical_map, len(address_map))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     VscPostfixSync().main()

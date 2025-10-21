@@ -15,6 +15,7 @@
 """
 sacctmgr commands
 """
+
 import logging
 from enum import Enum
 
@@ -28,10 +29,10 @@ from vsc.administration.slurm.scancel import create_remove_user_jobs_command
 SLURM_SACCT_MGR = "/usr/bin/sacctmgr"
 
 SLURM_ORGANISATIONS = {
-    ANTWERPEN: 'uantwerpen',
-    BRUSSEL: 'vub',
-    GENT: 'ugent',
-    LEUVEN: 'kuleuven',
+    ANTWERPEN: "uantwerpen",
+    BRUSSEL: "vub",
+    GENT: "ugent",
+    LEUVEN: "kuleuven",
 }
 
 
@@ -50,38 +51,94 @@ class SacctMgrTypes(Enum):
 # FIXME: at some point this should be versioned
 
 SacctUserFields = [
-    "User", "Def_Acct", "Admin", "Cluster", "Account", "Partition", "Share",
-    "MaxJobs", "MaxNodes", "MaxCPUs", "MaxSubmit", "MaxWall", "MaxCPUMins",
-    "QOS", "Def_QOS"
+    "User",
+    "Def_Acct",
+    "Admin",
+    "Cluster",
+    "Account",
+    "Partition",
+    "Share",
+    "MaxJobs",
+    "MaxNodes",
+    "MaxCPUs",
+    "MaxSubmit",
+    "MaxWall",
+    "MaxCPUMins",
+    "QOS",
+    "Def_QOS",
 ]
 
 SacctAccountFields = [
-    "Account", "Descr", "Org", "Cluster", "ParentName", "User", "Share",
-    "GrpJobs", "GrpNodes", "GrpCPUs", "GrpMem", "GrpSubmit", "GrpWall", "GrpCPUMins",
-    "MaxJobs", "MaxNodes", "MaxCPUs", "MaxSubmit", "MaxWall", "MaxCPUMins",
-    "QOS", "Def_QOS"
+    "Account",
+    "Descr",
+    "Org",
+    "Cluster",
+    "ParentName",
+    "User",
+    "Share",
+    "GrpJobs",
+    "GrpNodes",
+    "GrpCPUs",
+    "GrpMem",
+    "GrpSubmit",
+    "GrpWall",
+    "GrpCPUMins",
+    "MaxJobs",
+    "MaxNodes",
+    "MaxCPUs",
+    "MaxSubmit",
+    "MaxWall",
+    "MaxCPUMins",
+    "QOS",
+    "Def_QOS",
 ]
 
 SacctQosFields = [
-    "Name", "Priority", "GraceTime", "Preempt", "PreemptExemptTime", "PreemptMode",
-    "Flags", "UsageThres", "UsageFactor", "GrpTRES", "GrpTRESMins", "GrpTRESRunMins",
-    "GrpJobs", "GrpSubmit", "GrpWall", "MaxTRES", "MaxTRESPerNode", "MaxTRESMins",
-    "MaxWall", "MaxTRESPU", "MaxJobsPU", "MaxSubmitPU", "MaxTRESPA", "MaxJobsPA",
-    "MaxSubmitPA", "MinTRES"
+    "Name",
+    "Priority",
+    "GraceTime",
+    "Preempt",
+    "PreemptExemptTime",
+    "PreemptMode",
+    "Flags",
+    "UsageThres",
+    "UsageFactor",
+    "GrpTRES",
+    "GrpTRESMins",
+    "GrpTRESRunMins",
+    "GrpJobs",
+    "GrpSubmit",
+    "GrpWall",
+    "MaxTRES",
+    "MaxTRESPerNode",
+    "MaxTRESMins",
+    "MaxWall",
+    "MaxTRESPU",
+    "MaxJobsPU",
+    "MaxSubmitPU",
+    "MaxTRESPA",
+    "MaxJobsPA",
+    "MaxSubmitPA",
+    "MinTRES",
 ]
 
 SacctResourceFields = [
-    "Name", "Server", "Type", "Count", "Allocated", "ServerType",
+    "Name",
+    "Server",
+    "Type",
+    "Count",
+    "Allocated",
+    "ServerType",
 ]
 
 IGNORE_USERS = ["root"]
 IGNORE_ACCOUNTS = ["root"]
 IGNORE_QOS = ["normal"]
 
-SlurmAccount = namedtuple_with_defaults('SlurmAccount', SacctAccountFields)
-SlurmUser = namedtuple_with_defaults('SlurmUser', SacctUserFields)
-SlurmQos = namedtuple_with_defaults('SlurmQos', SacctQosFields)
-SlurmResource = namedtuple_with_defaults('SlurmResource', SacctResourceFields)
+SlurmAccount = namedtuple_with_defaults("SlurmAccount", SacctAccountFields)
+SlurmUser = namedtuple_with_defaults("SlurmUser", SacctUserFields)
+SlurmQos = namedtuple_with_defaults("SlurmQos", SacctQosFields)
+SlurmResource = namedtuple_with_defaults("SlurmResource", SacctResourceFields)
 
 
 def mkSlurmAccount(fields):
@@ -108,18 +165,21 @@ def mkSlurmQos(fields):
 
 def mkSlurmResource(fields):
     """Make a named tuple from the given fields"""
-    fields['Count'] = int(fields['Count'])
+    fields["Count"] = int(fields["Count"])
     resource = mkNamedTupleInstance(fields, SlurmResource)
     return resource
 
 
 def mksacctmgr(mode):
     """Decorator to prefix common sacctmgr code for mode"""
+
     def decorator(function):
         def wrapper(*args, **kwargs):
             prefix = [SLURM_SACCT_MGR, "-i", mode]
             return prefix + function(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -150,7 +210,7 @@ def parse_slurm_sacct_dump(lines, info_type, exclude=None):
     """Parse the sacctmgr dump from the listing."""
     acct_info = set()
 
-    header = [w.replace(' ', '_').replace('%', 'PCT_') for w in lines[0].rstrip().split("|")]
+    header = [w.replace(" ", "_").replace("%", "PCT_") for w in lines[0].rstrip().split("|")]
     header_names = [h.lower() for h in header]
 
     if info_type == SacctMgrTypes.accounts:
@@ -198,7 +258,7 @@ def get_slurm_sacct_info(info_type, exclude=None):
     return info
 
 
-@mksacctmgr('add')
+@mksacctmgr("add")
 def create_add_account_command(account, parent, organisation, cluster, fairshare=None, qos=None):
     """
     Creates the command to add the given account.
@@ -215,7 +275,7 @@ def create_add_account_command(account, parent, organisation, cluster, fairshare
         account,
         f"Parent={parent or 'root'}",
         f"Organization={SLURM_ORGANISATIONS[organisation]}",
-        f"Cluster={cluster}"
+        f"Cluster={cluster}",
     ]
 
     if fairshare is not None:
@@ -229,12 +289,12 @@ def create_add_account_command(account, parent, organisation, cluster, fairshare
         parent,
         cluster,
         organisation,
-        )
+    )
 
     return command
 
 
-@mksacctmgr('modify')
+@mksacctmgr("modify")
 def create_default_account_command(user, account, cluster):
     """Creates the command the set a default account for a user.
 
@@ -249,16 +309,12 @@ def create_default_account_command(user, account, cluster):
         "set",
         f"DefaultAccount={account}",
     ]
-    logging.debug(
-        "Creating command to set default account to %s for %s on cluster %s",
-        account,
-        user,
-        cluster)
+    logging.debug("Creating command to set default account to %s for %s on cluster %s", account, user, cluster)
 
     return command
 
 
-@mksacctmgr('modify')
+@mksacctmgr("modify")
 def create_change_account_fairshare_command(account, cluster, fairshare):
     command = [
         "account",
@@ -277,7 +333,7 @@ def create_change_account_fairshare_command(account, cluster, fairshare):
     return command
 
 
-@mksacctmgr('add')
+@mksacctmgr("add")
 def create_add_user_command(user, account, cluster, partition=None, default_account=None):
     """
     Creates the command to add the given account.
@@ -296,9 +352,7 @@ def create_add_user_command(user, account, cluster, partition=None, default_acco
         f"Cluster={cluster}",
     ]
     if partition is not None:
-        command.append(
-            f"Partition={partition}"
-        )
+        command.append(f"Partition={partition}")
     if default_account is not None:
         command.append(
             f"DefaultAccount={default_account}",
@@ -308,7 +362,7 @@ def create_add_user_command(user, account, cluster, partition=None, default_acco
         user,
         account,
         cluster,
-        )
+    )
 
     return command
 
@@ -332,18 +386,18 @@ def create_change_user_command(user, current_vo_id, new_vo_id, cluster):
         user,
         cluster,
         current_vo_id,
-        new_vo_id
-        )
+        new_vo_id,
+    )
 
     return [
         add_user_command,
         set_default_account_command,
         remove_former_association_jobs_command,
-        remove_association_user_command
+        remove_association_user_command,
     ]
 
 
-@mksacctmgr('remove')
+@mksacctmgr("remove")
 def create_remove_user_command(user, cluster=None):
     """Create the command to remove a user.
 
@@ -360,12 +414,12 @@ def create_remove_user_command(user, cluster=None):
         "Adding command to remove user %s from Cluster=%s",
         user,
         cluster,
-        )
+    )
 
     return command
 
 
-@mksacctmgr('remove')
+@mksacctmgr("remove")
 def create_remove_account_command(account, cluster):
     """Create the command to remove an account.
 
@@ -386,7 +440,7 @@ def create_remove_account_command(account, cluster):
     return command
 
 
-@mksacctmgr('remove')
+@mksacctmgr("remove")
 def create_remove_user_account_command(user, account, cluster, partition=None):
     """Create the command to remove a user.
 
@@ -407,12 +461,12 @@ def create_remove_user_account_command(user, account, cluster, partition=None):
         user,
         account,
         cluster,
-        )
+    )
 
     return command
 
 
-@mksacctmgr('add')
+@mksacctmgr("add")
 def create_add_qos_command(name):
     """Create the command to add a QOS
 
@@ -426,7 +480,7 @@ def create_add_qos_command(name):
     return command
 
 
-@mksacctmgr('remove')
+@mksacctmgr("remove")
 def create_remove_qos_command(name):
     """Create the command to remove a QOS.
 
@@ -443,7 +497,7 @@ def create_remove_qos_command(name):
     return command
 
 
-@mksacctmgr('modify')
+@mksacctmgr("modify")
 def create_modify_qos_command(name, settings):
     """Create the command to modify a QOS
 
@@ -465,7 +519,7 @@ def create_modify_qos_command(name, settings):
     return command
 
 
-@mksacctmgr('add')
+@mksacctmgr("add")
 def create_add_resource_license_command(name, server, stype, clusters, count):
     """Create the command to add a license resource
 
@@ -485,7 +539,7 @@ def create_add_resource_license_command(name, server, stype, clusters, count):
     return command
 
 
-@mksacctmgr('remove')
+@mksacctmgr("remove")
 def create_remove_resource_license_command(name, server, stype):
     """Create the command to remove a license resource.
 
@@ -503,7 +557,7 @@ def create_remove_resource_license_command(name, server, stype):
     return command
 
 
-@mksacctmgr('modify')
+@mksacctmgr("modify")
 def create_modify_resource_license_command(name, server, stype, count):
     """Create the command to modify a license resource
 

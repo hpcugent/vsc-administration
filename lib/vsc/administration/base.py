@@ -27,10 +27,11 @@ import os
 from vsc.config.base import VscStorage, GENT, VSC_DATA, VSC_DATA_SHARED, VSC_HOME
 from vsc.filesystem.operator import StorageOperator
 
-MOUNT_POINT_LOGIN = 'login'
-MOUNT_POINT_DEFAULT = 'backend'
+MOUNT_POINT_LOGIN = "login"
+MOUNT_POINT_DEFAULT = "backend"
 
-class VscTier2Accountpage():
+
+class VscTier2Accountpage:
     """Common methods to handle settings from the account page"""
 
     def __init__(self, storage=None, host_institute=GENT):
@@ -48,7 +49,7 @@ class VscTier2Accountpage():
         for fs in self.storage[self.host_institute]:
             self.storage[self.host_institute][fs].operator = StorageOperator(self.storage[self.host_institute][fs])
 
-    def _create_fileset(self, storage, path, fileset_name, parent_fileset=None, mod='755'):
+    def _create_fileset(self, storage, path, fileset_name, parent_fileset=None, mod="755"):
         """Create a fileset in the storage backend"""
 
         try:
@@ -134,4 +135,3 @@ class VscTier2Accountpage():
     def _grouping_scratch_path(self, storage_name, mount_point=MOUNT_POINT_DEFAULT):
         """Return the path to the grouping fileset for the users on the given scratch filesystem."""
         return self._get_grouping_path(storage_name, mount_point)
-

@@ -29,13 +29,13 @@ def main():
     Main script. Sets the hard limit for either user or VO.
     """
     options = {
-        'storage': ("The storage system's name", None, 'store', None),
-        'fileset': ("The fileset where you want to adjust the quota", None, 'store', None),
-        'user': ('process users', None, 'store', None),
-        'vo': ('process vos', None, 'store', None),
-        'size': ('the target quota (in KiB)', int, 'store', None),
-        'original': ('show the original quota values', None, 'store_true', False),
-        'access_token': ('OAuth2 token to access the account page REST API', None, 'store', None),
+        "storage": ("The storage system's name", None, "store", None),
+        "fileset": ("The fileset where you want to adjust the quota", None, "store", None),
+        "user": ("process users", None, "store", None),
+        "vo": ("process vos", None, "store", None),
+        "size": ("the target quota (in KiB)", int, "store", None),
+        "original": ("show the original quota values", None, "store_true", False),
+        "access_token": ("OAuth2 token to access the account page REST API", None, "store", None),
     }
 
     opts = SimpleOption(options)
@@ -58,7 +58,6 @@ def main():
         upload = client.quota.user[vsc_id].storage[storage].fileset[fileset].size
 
     if opts.options.vo:
-
         vsc_id = opts.options.vo
         original = client.vo[vsc_id].quota
         upload = client.quota.vo[vsc_id].storage[storage].fileset[fileset].size
@@ -80,5 +79,6 @@ def main():
         print("Request failed")
         print(f"Issue: {result[1]}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

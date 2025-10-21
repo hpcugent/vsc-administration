@@ -15,6 +15,7 @@
 """
 scontrol commands
 """
+
 import logging
 import re
 import shlex
@@ -31,7 +32,8 @@ SLURM_SCONTROL = "/usr/bin/scontrol"
 SLURM_SCONTROL_CONFIG_REGEX = re.compile(r"^(.*\S)\s+=\s+(\S.*)$")
 
 
-LICENSE_RESERVATION_PREFIX = 'external_license_'
+LICENSE_RESERVATION_PREFIX = "external_license_"
+
 
 class ScontrolTypes(Enum):
     reservation = "reservation"
@@ -41,33 +43,83 @@ class ScontrolTypes(Enum):
 
 
 ScontrolReservationFields = [
-    'ReservationName', 'StartTime', 'EndTime', 'Duration', 'Nodes', 'NodeCnt', 'CoreCnt',
-    'Features', 'PartitionName', 'Flags', 'TRES', 'Users', 'Groups', 'Accounts', 'Licenses',
-    'State', 'BurstBuffer', 'MaxStartDelay',
+    "ReservationName",
+    "StartTime",
+    "EndTime",
+    "Duration",
+    "Nodes",
+    "NodeCnt",
+    "CoreCnt",
+    "Features",
+    "PartitionName",
+    "Flags",
+    "TRES",
+    "Users",
+    "Groups",
+    "Accounts",
+    "Licenses",
+    "State",
+    "BurstBuffer",
+    "MaxStartDelay",
 ]
 
 ScontrolLicenseFields = [
-    'LicenseName', 'Total', 'Used', 'Free', 'Reserved', 'Remote',
+    "LicenseName",
+    "Total",
+    "Used",
+    "Free",
+    "Reserved",
+    "Remote",
 ]
 
 # Obviously, there are plenty more
 ScontrolConfigFields = [
-    'SLURM_CONF', 'SLURM_VERSION',
-    'ClusterName', 'AccountingStorageHost',
+    "SLURM_CONF",
+    "SLURM_VERSION",
+    "ClusterName",
+    "AccountingStorageHost",
 ]
 
 ScontrolPartitionFields = [
-    'PartitionName', 'AllowGroups', 'AllowAccounts', 'AllowQos', 'AllocNodes', 'Default', 'QoS', 'DefaultTime',
-    'DisableRootJobs', 'ExclusiveUser', 'GraceTime', 'Hidden', 'MaxNodes', 'MaxTime', 'MinNodes', 'LLN',
-    'MaxCPUsPerNode', 'Nodes', 'PriorityJobFactor', 'PriorityTier', 'RootOnly', 'ReqResv', 'OverSubscribe',
-    'OverTimeLimit', 'PreemptMode', 'State', 'TotalCPUs', 'TotalNodes', 'SelectTypeParameters', 'JobDefaults',
-    'DefMemPerCPU', 'MaxMemPerNode', 'TRESBillingWeights',
+    "PartitionName",
+    "AllowGroups",
+    "AllowAccounts",
+    "AllowQos",
+    "AllocNodes",
+    "Default",
+    "QoS",
+    "DefaultTime",
+    "DisableRootJobs",
+    "ExclusiveUser",
+    "GraceTime",
+    "Hidden",
+    "MaxNodes",
+    "MaxTime",
+    "MinNodes",
+    "LLN",
+    "MaxCPUsPerNode",
+    "Nodes",
+    "PriorityJobFactor",
+    "PriorityTier",
+    "RootOnly",
+    "ReqResv",
+    "OverSubscribe",
+    "OverTimeLimit",
+    "PreemptMode",
+    "State",
+    "TotalCPUs",
+    "TotalNodes",
+    "SelectTypeParameters",
+    "JobDefaults",
+    "DefMemPerCPU",
+    "MaxMemPerNode",
+    "TRESBillingWeights",
 ]
 
-SlurmReservation = namedtuple_with_defaults('SlurmReservation', ScontrolReservationFields)
-SlurmLicense = namedtuple_with_defaults('SlurmLicense', ScontrolLicenseFields)
-SlurmConfig = namedtuple_with_defaults('SlurmConfig', ScontrolConfigFields)
-SlurmPartition = namedtuple_with_defaults('SlurmPartition', ScontrolPartitionFields)
+SlurmReservation = namedtuple_with_defaults("SlurmReservation", ScontrolReservationFields)
+SlurmLicense = namedtuple_with_defaults("SlurmLicense", ScontrolLicenseFields)
+SlurmConfig = namedtuple_with_defaults("SlurmConfig", ScontrolConfigFields)
+SlurmPartition = namedtuple_with_defaults("SlurmPartition", ScontrolPartitionFields)
 
 
 def mkSlurmReservation(fields):
@@ -78,7 +130,7 @@ def mkSlurmReservation(fields):
 
 def mkSlurmLicense(fields):
     """Make a named tuple from the given fields"""
-    for key in ['Total', 'Used', 'Free', 'Reserved']:
+    for key in ["Total", "Used", "Free", "Reserved"]:
         fields[key] = int(fields[key])
     lic = mkNamedTupleInstance(fields, SlurmLicense)
     return lic
@@ -93,7 +145,7 @@ def mkSlurmConfig(fields):
 
 def mkSlurmPartition(fields):
     """Make a named tuple from the given fields"""
-    for key in ['TotalCPUs', 'TotalNodes', 'DefMemPerCPU', 'MaxMemPerNode']:
+    for key in ["TotalCPUs", "TotalNodes", "DefMemPerCPU", "MaxMemPerNode"]:
         fields[key] = int(fields[key])
     lic = mkNamedTupleInstance(fields, SlurmPartition)
     return lic
@@ -101,11 +153,14 @@ def mkSlurmPartition(fields):
 
 def mkscontrol(mode):
     """Decorator to prefix common sacctmgr code for mode"""
+
     def decorator(function):
         def wrapper(*args, **kwargs):
             prefix = [SLURM_SCONTROL, mode]
             return prefix + function(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -116,7 +171,7 @@ def parse_scontrol_line(line, info_type):
 
     # convert all null to None
     for key in fields.keys():
-        if fields[key] == '(null)':
+        if fields[key] == "(null)":
             fields[key] = None
 
     # sanity check for keys vs the fields?
@@ -139,7 +194,7 @@ def parse_scontrol_dump(lines, info_type):
     """Parse the scontrol dump from the listing."""
     info = set()
 
-    if len(lines) == 1 and lines[0].startswith('No '):
+    if len(lines) == 1 and lines[0].startswith("No "):
         logging.warning("Output indicates there was no result for type %s: '%s'", info_type, lines[0])
     else:
         for line in lines:
@@ -209,28 +264,28 @@ def _settings_args(settings):
     return [f"{k}={settings[k]}" for k in sorted(settings.keys())]
 
 
-@mkscontrol('create')
+@mkscontrol("create")
 def create_create_reservation(reservation, settings):
     """
     Creates the command to update a reservation
     """
     command = [
-        'reservation',
-        f'ReservationName={reservation}',
+        "reservation",
+        f"ReservationName={reservation}",
     ]
     command.extend(_settings_args(settings))
 
     return command
 
 
-@mkscontrol('update')
+@mkscontrol("update")
 def create_update_reservation(reservation, settings):
     """
     Creates the command to update a reservation
     """
     command = [
-        'reservation',
-        f'ReservationName={reservation}',
+        "reservation",
+        f"ReservationName={reservation}",
     ]
 
     command.extend(_settings_args(settings))
@@ -238,14 +293,14 @@ def create_update_reservation(reservation, settings):
     return command
 
 
-@mkscontrol('delete')
+@mkscontrol("delete")
 def create_delete_reservation(reservation):
     """
     Creates the command to delete a reservation
     """
     command = [
-        'reservation',
-        f'ReservationName={reservation}',
+        "reservation",
+        f"ReservationName={reservation}",
     ]
     return command
 
@@ -258,13 +313,13 @@ def create_create_license_reservation(licname, value, partition):
     # infinite/unlimited means 1 year
     days = 20 * 365
     settings = {
-        'Licenses': f'{licname}:{value}',
-        'Partition': partition,
-        'Start': 'now',
-        'Duration': f'{days}-0:0:0',
-        'User': 'root',
-        'Flags': 'LICENSE_ONLY',
-        'NodeCnt': '0',  # otherwise all nodes are placed in the reservation
+        "Licenses": f"{licname}:{value}",
+        "Partition": partition,
+        "Start": "now",
+        "Duration": f"{days}-0:0:0",
+        "User": "root",
+        "Flags": "LICENSE_ONLY",
+        "NodeCnt": "0",  # otherwise all nodes are placed in the reservation
     }
 
     return create_create_reservation(name, settings)
@@ -276,6 +331,6 @@ def create_update_license_reservation(licname, value):
     """
     name = make_license_reservation_name(licname)
     settings = {
-        'Licenses': f'{licname}:{value}',
+        "Licenses": f"{licname}:{value}",
     }
     return create_update_reservation(name, settings)

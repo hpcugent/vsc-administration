@@ -32,17 +32,30 @@ from vsc.accountpage.wrappers import mkGroup, mkVscUserSizeQuota
 from vsc.administration.base import VscTier2Accountpage, MOUNT_POINT_DEFAULT
 from vsc.administration.tools import quota_limits
 from vsc.config.base import (
-    VSC, VSC_DATA, VSC_HOME, VSC_PRODUCTION_SCRATCH, BRUSSEL, GENT,
-    VO_PREFIX_BY_INSTITUTE, VSC_SCRATCH_KYUKON, VSC_SCRATCH_RHEA,
-    NEW, MODIFIED, MODIFY, ACTIVE, HOME_KEY, DATA_KEY, SCRATCH_KEY,
+    VSC,
+    VSC_DATA,
+    VSC_HOME,
+    VSC_PRODUCTION_SCRATCH,
+    BRUSSEL,
+    GENT,
+    VO_PREFIX_BY_INSTITUTE,
+    VSC_SCRATCH_KYUKON,
+    VSC_SCRATCH_RHEA,
+    NEW,
+    MODIFIED,
+    MODIFY,
+    ACTIVE,
+    HOME_KEY,
+    DATA_KEY,
+    SCRATCH_KEY,
     STORAGE_SHARED_SUFFIX,
 )
 from vsc.utils.missing import ensure_ascii_string
 
 # Cache for user instances
 _users_cache = {
-    'VscAccountPageUser': {},
-    'VscTier2AccountpageUser': {},
+    "VscAccountPageUser": {},
+    "VscTier2AccountpageUser": {},
 }
 
 
@@ -75,16 +88,16 @@ class VscAccountPageUser:
             self._init_cache(pubkeys=pubkeys, account=account)
 
     def _init_cache(self, **kwargs):
-        self._cache['pubkeys'] = kwargs.get('pubkeys', None)
-        self._cache['account'] = kwargs.get('account', None)
-        self._cache['usergroup'] = None
-        self._cache['home_on_scratch'] = None
+        self._cache["pubkeys"] = kwargs.get("pubkeys", None)
+        self._cache["account"] = kwargs.get("account", None)
+        self._cache["usergroup"] = None
+        self._cache["home_on_scratch"] = None
 
     @property
     def account(self):
-        if not self._cache['account']:
-            self._cache['account'] = mkVscAccount((self.rest_client.account[self.user_id].get())[1])
-        return self._cache['account']
+        if not self._cache["account"]:
+            self._cache["account"] = mkVscAccount((self.rest_client.account[self.user_id].get())[1])
+        return self._cache["account"]
 
     @property
     def person(self):
@@ -92,34 +105,34 @@ class VscAccountPageUser:
 
     @property
     def usergroup(self):
-        if not self._cache['usergroup']:
-            if self.person.institute_login in ('x_admin', 'admin', 'voadmin'):
+        if not self._cache["usergroup"]:
+            if self.person.institute_login in ("x_admin", "admin", "voadmin"):
                 # TODO to be removed when magic site admin usergroups are purged from code
-                self._cache['usergroup'] = mkGroup((self.rest_client.group[self.user_id].get())[1])
+                self._cache["usergroup"] = mkGroup((self.rest_client.group[self.user_id].get())[1])
             else:
-                self._cache['usergroup'] = mkUserGroup(self.rest_client.account[self.user_id].usergroup.get()[1])
+                self._cache["usergroup"] = mkUserGroup(self.rest_client.account[self.user_id].usergroup.get()[1])
 
-        return self._cache['usergroup']
+        return self._cache["usergroup"]
 
     @property
     def home_on_scratch(self):
-        if self._cache['home_on_scratch'] is None:
+        if self._cache["home_on_scratch"] is None:
             hos = self.rest_client.account[self.user_id].home_on_scratch.get()[1]
-            self._cache['home_on_scratch'] = [mkVscHomeOnScratch(h) for h in hos]
-        return self._cache['home_on_scratch']
+            self._cache["home_on_scratch"] = [mkVscHomeOnScratch(h) for h in hos]
+        return self._cache["home_on_scratch"]
 
     @property
     def pubkeys(self):
-        if self._cache['pubkeys'] is None:  # an empty list is allowed :)
+        if self._cache["pubkeys"] is None:  # an empty list is allowed :)
             ps = self.rest_client.account[self.user_id].pubkey.get()[1]
-            self._cache['pubkeys'] = [mkVscAccountPubkey(p) for p in ps if not p['deleted']]
-        return self._cache['pubkeys']
+            self._cache["pubkeys"] = [mkVscAccountPubkey(p) for p in ps if not p["deleted"]]
+        return self._cache["pubkeys"]
 
     def get_institute_prefix(self):
         """
         Get the first letter of the institute the user belongs to.
         """
-        return self.person.institute['name'][0]
+        return self.person.institute["name"][0]
 
 
 class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
@@ -127,8 +140,18 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
     A user on each of our Tier-2 system using the account page REST API
     to retrieve its information.
     """
-    def __init__(self, user_id, storage=None, pickle_storage=None, rest_client=None,
-                 account=None, pubkeys=None, host_institute=GENT, use_user_cache=False):
+
+    def __init__(
+        self,
+        user_id,
+        storage=None,
+        pickle_storage=None,
+        rest_client=None,
+        account=None,
+        pubkeys=None,
+        host_institute=GENT,
+        use_user_cache=False,
+    ):
         """
         Initialisation.
         @type vsc_user_id: string representing the user's VSC ID (vsc[0-9]{5})
@@ -155,70 +178,78 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
 
     def _init_cache(self, **kwargs):
         super()._init_cache(**kwargs)
-        self._cache['quota'] = {}
+        self._cache["quota"] = {}
 
     @property
     def user_home_quota(self):
-        if not self._cache['quota']:
+        if not self._cache["quota"]:
             self._init_quota_cache()
-        return self._cache['quota']['home']
+        return self._cache["quota"]["home"]
 
     @property
     def user_data_quota(self):
-        if not self._cache['quota']:
+        if not self._cache["quota"]:
             self._init_quota_cache()
-        return self._cache['quota']['data']
+        return self._cache["quota"]["data"]
 
     @property
     def user_scratch_quota(self):
-        if not self._cache['quota']:
+        if not self._cache["quota"]:
             self._init_quota_cache()
-        return self._cache['quota']['scratch']
+        return self._cache["quota"]["scratch"]
 
     @property
     def vo_data_quota(self):
-        if not self._cache['quota']:
+        if not self._cache["quota"]:
             self._init_quota_cache()
-        return self._cache['quota']['vo']['data']
+        return self._cache["quota"]["vo"]["data"]
 
     @property
     def vo_scratch_quota(self):
-        if not self._cache['quota']:
+        if not self._cache["quota"]:
             self._init_quota_cache()
-        return self._cache['quota']['vo']['scratch']
+        return self._cache["quota"]["vo"]["scratch"]
 
     def _init_quota_cache(self):
         all_quota = [mkVscUserSizeQuota(q) for q in self.rest_client.account[self.user_id].quota.get()[1]]
         # we no longer set defaults, since we do not want to accidentally revert people to some default
         # that is lower than their actual quota if the accountpage goes down in between retrieving the users
         # and fetching the quota
-        institute_quota = [q for q in all_quota if q.storage['institute'] == self.host_institute]
+        institute_quota = [q for q in all_quota if q.storage["institute"] == self.host_institute]
         fileset_name = self.vsc.user_grouping_fileset(self.account.vsc_id)
 
         def user_proposition(quota, storage_type):
-            return quota.fileset == fileset_name and quota.storage['storage_type'] == storage_type
+            return quota.fileset == fileset_name and quota.storage["storage_type"] == storage_type
 
         # Non-UGent users who have quota in Gent, e.g., in a VO, should not have these set
-        if self.person.institute['name'] == self.host_institute:
+        if self.person.institute["name"] == self.host_institute:
             # next(iter(a_list), None) will return the first item of a_list if the list is non-empty, other None
-            self._cache['quota']['home'] = next(iter([q.hard for q in institute_quota
-                                                      if user_proposition(q, HOME_KEY)]), None)
-            self._cache['quota']['data'] = next(iter([q.hard for q in institute_quota
-                                            if user_proposition(q, DATA_KEY) and not
-                                            q.storage['name'].endswith(STORAGE_SHARED_SUFFIX)]), None)
-            self._cache['quota']['scratch'] = [q for q in institute_quota if user_proposition(q, SCRATCH_KEY)]
+            self._cache["quota"]["home"] = next(
+                iter([q.hard for q in institute_quota if user_proposition(q, HOME_KEY)]), None
+            )
+            self._cache["quota"]["data"] = next(
+                iter([
+                    q.hard
+                    for q in institute_quota
+                    if user_proposition(q, DATA_KEY) and not q.storage["name"].endswith(STORAGE_SHARED_SUFFIX)
+                ]),
+                None,
+            )
+            self._cache["quota"]["scratch"] = [q for q in institute_quota if user_proposition(q, SCRATCH_KEY)]
         else:
-            self._cache['quota']['home'] = None
-            self._cache['quota']['data'] = None
-            self._cache['quota']['scratch'] = None
+            self._cache["quota"]["home"] = None
+            self._cache["quota"]["data"] = None
+            self._cache["quota"]["scratch"] = None
 
         def user_vo_proposition(quota, storage_type):
-            return quota.fileset.startswith(VO_PREFIX_BY_INSTITUTE[self.host_institute]) and \
-                quota.storage['storage_type'] == storage_type
+            return (
+                quota.fileset.startswith(VO_PREFIX_BY_INSTITUTE[self.host_institute])
+                and quota.storage["storage_type"] == storage_type
+            )
 
-        self._cache['quota']['vo'] = {}
-        self._cache['quota']['vo']['data'] = [q for q in institute_quota if user_vo_proposition(q, DATA_KEY)]
-        self._cache['quota']['vo']['scratch'] = [q for q in institute_quota if user_vo_proposition(q, SCRATCH_KEY)]
+        self._cache["quota"]["vo"] = {}
+        self._cache["quota"]["vo"]["data"] = [q for q in institute_quota if user_vo_proposition(q, DATA_KEY)]
+        self._cache["quota"]["vo"]["scratch"] = [q for q in institute_quota if user_vo_proposition(q, SCRATCH_KEY)]
 
     def pickle_path(self):
         """Provide the location where to store pickle files for this user.
@@ -226,7 +257,7 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
         This location is the user'path on the pickle_storage specified when creating
         a VscTier2AccountpageUser instance.
         """
-        (path, _) = self.institute_path_templates[self.pickle_storage]['user'](self.account.vsc_id)
+        (path, _) = self.institute_path_templates[self.pickle_storage]["user"](self.account.vsc_id)
         return os.path.join(self.institute_storage[self.pickle_storage].backend_mount_point, path)
 
     def _create_grouping_fileset(self, storage, path, fileset_name):
@@ -238,12 +269,12 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
 
     def _get_path(self, storage_name, mount_point=MOUNT_POINT_DEFAULT):
         """Get the path for the (if any) user directory on the given storage_name."""
-        (path, _) = self.institute_path_templates[storage_name]['user'](self.account.vsc_id)
+        (path, _) = self.institute_path_templates[storage_name]["user"](self.account.vsc_id)
         return os.path.join(self._get_mount_path(storage_name, mount_point), path)
 
     def _get_grouping_path(self, storage_name, mount_point=MOUNT_POINT_DEFAULT):
         """Get the path and the fileset for the user group directory (and associated fileset)."""
-        (path, fileset) = self.institute_path_templates[storage_name]['user'](self.account.vsc_id)
+        (path, fileset) = self.institute_path_templates[storage_name]["user"](self.account.vsc_id)
         return (os.path.join(self._get_mount_path(storage_name, mount_point), os.path.dirname(path)), fileset)
 
     def _create_user_dir(self, grouping_f, path_f, storage_name):
@@ -284,9 +315,8 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
     def create_scratch_dir(self, storage_name):
         """Create the user's directory on the given scratch filesystem."""
         self._create_user_dir(
-            lambda: self._grouping_scratch_path(storage_name),
-            lambda: self._scratch_path(storage_name),
-            storage_name)
+            lambda: self._grouping_scratch_path(storage_name), lambda: self._scratch_path(storage_name), storage_name
+        )
 
     def _set_quota(self, storage_name, path, quota):
         """Set the given quota on the target path.
@@ -324,7 +354,7 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
 
     def set_scratch_quota(self, storage_name):
         """Set USR quota on the scratch FS in the user fileset."""
-        quota = [q for q in self.user_scratch_quota if q.storage['name'] in (storage_name,)]
+        quota = [q for q in self.user_scratch_quota if q.storage["name"] in (storage_name,)]
         if not quota:
             logging.error("No scratch quota information available for %s", storage_name)
             return
@@ -334,7 +364,7 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
         else:
             # Hack; this should actually become the link path of the fileset
             # that contains the path (the file, not the followed symlink)
-            path = os.path.normpath(os.path.join(self._scratch_path(storage_name), '..'))
+            path = os.path.normpath(os.path.join(self._scratch_path(storage_name), ".."))
 
         self._set_quota(storage_name, path, quota[0].hard)
 
@@ -360,7 +390,7 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
         - otherwise, call super's __setattr__()
         """
 
-        if name == 'dry_run':
+        if name == "dry_run":
             for filesystem in self.institute_storage:
                 self.institute_storage[filesystem].operator().dry_run = value
 
@@ -368,11 +398,11 @@ class VscTier2AccountpageUser(VscAccountPageUser, VscTier2Accountpage):
 
 
 cluster_user_pickle_location_map = {
-    'kyukon': VscTier2AccountpageUser,
+    "kyukon": VscTier2AccountpageUser,
 }
 
 cluster_user_pickle_store_map = {
-    'kyukon': VSC_SCRATCH_KYUKON,
+    "kyukon": VSC_SCRATCH_KYUKON,
 }
 
 
@@ -412,10 +442,9 @@ def process_users_quota(options, user_quota, storage_name, client, host_institut
     ok_quota = []
 
     for quota in user_quota:
-        user = VscTier2AccountpageUser(quota.user,
-                                       rest_client=client,
-                                       host_institute=host_institute,
-                                       use_user_cache=use_user_cache)
+        user = VscTier2AccountpageUser(
+            quota.user, rest_client=client, host_institute=host_institute, use_user_cache=use_user_cache
+        )
         user.dry_run = options.dry_run
 
         try:
@@ -455,10 +484,9 @@ def process_users(options, account_ids, storage_name, client, host_institute=GEN
     ok_users = []
 
     for vsc_id in sorted(account_ids):
-        user = VscTier2AccountpageUser(vsc_id,
-                                       rest_client=client,
-                                       host_institute=host_institute,
-                                       use_user_cache=use_user_cache)
+        user = VscTier2AccountpageUser(
+            vsc_id, rest_client=client, host_institute=host_institute, use_user_cache=use_user_cache
+        )
         user.dry_run = options.dry_run
 
         try:

@@ -26,15 +26,15 @@ import configparser
 from vsc.filesystem.gpfs import GpfsOperations
 from vsc.config.base import VscStorage
 
-QUOTA_CONF_FILE = '/etc/quota_check.conf'
+QUOTA_CONF_FILE = "/etc/quota_check.conf"
 
 
 def set_up_apps(gpfs, storage_settings, storage, filesystem_info, filesystem_name):
     """Set up the apps fileset."""
     logging.info("Setting up the apps fileset on storage %s", storage)
-    fileset_name = storage_settings.path_templates[storage]['apps'][0]
-    fileset_path = os.path.join(filesystem_info['defaultMountPoint'], fileset_name)
-    if fileset_name not in [f['filesetName'] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
+    fileset_name = storage_settings.path_templates[storage]["apps"][0]
+    fileset_path = os.path.join(filesystem_info["defaultMountPoint"], fileset_name)
+    if fileset_name not in [f["filesetName"] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
         gpfs.make_fileset(fileset_path, fileset_name)
         gpfs.chmod(0o755, fileset_path)
         logging.info("Fileset %s created and linked at %s", fileset_name, fileset_path)
@@ -45,25 +45,24 @@ def set_up_filesystem(gpfs, storage_settings, storage, filesystem_info, filesyst
 
     # Create the basic gent fileset
     logging.info("Setting up for storage %s", storage)
-    fileset_name = storage_settings.path_templates[storage]['user'][0]
-    fileset_path = os.path.join(filesystem_info['defaultMountPoint'], fileset_name)
-    if fileset_name not in [f['filesetName'] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
+    fileset_name = storage_settings.path_templates[storage]["user"][0]
+    fileset_path = os.path.join(filesystem_info["defaultMountPoint"], fileset_name)
+    if fileset_name not in [f["filesetName"] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
         gpfs.make_fileset(fileset_path, fileset_name)
         gpfs.chmod(0o755, fileset_path)
         logging.info("Fileset %s created and linked at %s", fileset_name, fileset_path)
 
     if vo_support:
         # Create the basic vo fileset
-        fileset_name = storage_settings.path_templates[storage]['vo'][0]
-        vo_fileset_path = os.path.join(filesystem_info['defaultMountPoint'], fileset_name)
-        if fileset_name not in [f['filesetName'] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
+        fileset_name = storage_settings.path_templates[storage]["vo"][0]
+        vo_fileset_path = os.path.join(filesystem_info["defaultMountPoint"], fileset_name)
+        if fileset_name not in [f["filesetName"] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
             gpfs.make_fileset(vo_fileset_path, fileset_name)
             gpfs.chmod(0o755, vo_fileset_path)
             logging.info("Fileset %s created and linked at %s", fileset_name, vo_fileset_path)
 
 
 def main():
-
     storage_settings = VscStorage()
 
     local_storage_conf = configparser.ConfigParser()
@@ -73,16 +72,16 @@ def main():
     gpfs.list_filesystems()
     gpfs.list_filesets()
 
-    for storage_name in local_storage_conf.get('MAIN', 'storage').split(','):
-
+    for storage_name in local_storage_conf.get("MAIN", "storage").split(","):
         filesystem_name = storage_settings[storage_name].filesystem
         filesystem_info = gpfs.get_filesystem_info(filesystem_name)
 
-        if storage_name in ('VSC_HOME'):
+        if storage_name in ("VSC_HOME"):
             set_up_filesystem(gpfs, storage_settings, storage_name, filesystem_info, filesystem_name)
             set_up_apps(gpfs, storage_settings, storage_name, filesystem_info, filesystem_name)
         else:
             set_up_filesystem(gpfs, storage_settings, storage_name, filesystem_info, filesystem_name, vo_support=True)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
