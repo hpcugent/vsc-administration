@@ -18,6 +18,7 @@ Original Perl code by Stijn De Weirdt
 
 @author: Andy Georges (Ghent University)
 """
+
 import logging
 
 TIER1_GRACE_GROUP_SUFFIX = "t1_mukgraceusers"
@@ -44,6 +45,7 @@ def create_stat_directory(path, permissions, uid, gid, posix, override_permissio
     """
     logging.warning("The create_stat_directory function has moved to vsc.filesystems")
     return posix.create_stat_directory(path, permissions, uid, gid, override_permissions=override_permissions)
+
 
 def quota_limits(quota, soft_fraction, replication_factor=1):
     """

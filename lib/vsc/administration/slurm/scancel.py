@@ -15,6 +15,7 @@
 """
 scancel commands
 """
+
 SLURM_SCANCEL = "/usr/bin/scancel"
 
 
@@ -60,4 +61,3 @@ def create_remove_jobs_for_account_command(account, cluster):
     ]
 
     return [remove_jobs_command_pending, remove_jobs_command_suspended]
-

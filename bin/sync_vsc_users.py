@@ -70,22 +70,22 @@ def main():
     """
 
     options = {
-        'nagios-check-interval-threshold': NAGIOS_CHECK_INTERVAL_THRESHOLD,
-        'storage': ('storage systems on which to deploy users and vos', None, 'extend', []),
-        'user': ('process users', None, 'store_true', False),
-        'vo': ('process vos', None, 'store_true', False),
-        'access_token': ('OAuth2 token to access the account page REST API', None, 'store', None),
-        'account_page_url': ('URL of the account page where we can find the REST API', None, 'store', None),
-        'host_institute': ('Name of the institute where this script is being run', str, 'store', GENT),
-        'start_timestamp': ('Timestamp to start the sync from', str, 'store', None),
+        "nagios-check-interval-threshold": NAGIOS_CHECK_INTERVAL_THRESHOLD,
+        "storage": ("storage systems on which to deploy users and vos", None, "extend", []),
+        "user": ("process users", None, "store_true", False),
+        "vo": ("process vos", None, "store_true", False),
+        "access_token": ("OAuth2 token to access the account page REST API", None, "store", None),
+        "account_page_url": ("URL of the account page where we can find the REST API", None, "store", None),
+        "host_institute": ("Name of the institute where this script is being run", str, "store", GENT),
+        "start_timestamp": ("Timestamp to start the sync from", str, "store", None),
     }
 
     opts = ExtendedSimpleOption(options)
     stats = {}
 
     (last_timestamp, start_time) = retrieve_timestamp_with_default(
-        SYNC_TIMESTAMP_FILENAME,
-        start_timestamp=opts.options.start_timestamp)
+        SYNC_TIMESTAMP_FILENAME, start_timestamp=opts.options.start_timestamp
+    )
     logging.info("Using timestamp %s", last_timestamp)
     logging.info("Using startime %s", start_time)
 
@@ -99,35 +99,37 @@ def main():
         if opts.options.user:
             changed_accounts = client.account.institute[institute].modified[last_timestamp].get()[1]
 
-            logging.info("Found %d %s accounts that have changed in the accountpage since %s",
-                        len(changed_accounts), institute, last_timestamp)
+            logging.info(
+                "Found %d %s accounts that have changed in the accountpage since %s",
+                len(changed_accounts),
+                institute,
+                last_timestamp,
+            )
 
-            accounts = nub([u['vsc_id'] for u in changed_accounts])
+            accounts = nub([u["vsc_id"] for u in changed_accounts])
 
             for storage_name in opts.options.storage:
-                (users_ok, users_fail) = process_users(
-                    opts.options,
-                    accounts,
-                    storage_name,
-                    client,
-                    institute)
+                (users_ok, users_fail) = process_users(opts.options, accounts, storage_name, client, institute)
                 stats[f"{storage_name}_users_sync"] = len(users_ok)
                 stats[f"{storage_name}_users_sync_fail"] = len(users_fail)
                 stats[f"{storage_name}_users_sync_fail_warning"] = STORAGE_USERS_LIMIT_WARNING
                 stats[f"{storage_name}_users_sync_fail_critical"] = STORAGE_USERS_LIMIT_CRITICAL
 
             for storage_name in opts.options.storage:
-                storage_changed_quota = [mkVscUserSizeQuota(q) for q in
-                                         client.quota.user.storage[storage_name].modified[last_timestamp].get()[1]]
-                storage_changed_quota = [q for q in storage_changed_quota if q.fileset.startswith('vsc')]
-                logging.info("Found %d accounts that have changed quota on storage %s in the accountpage since %s",
-                            len(storage_changed_quota), storage_name, last_timestamp)
-                (quota_ok, quota_fail) = process_users_quota(
-                    opts.options,
-                    storage_changed_quota,
+                storage_changed_quota = [
+                    mkVscUserSizeQuota(q)
+                    for q in client.quota.user.storage[storage_name].modified[last_timestamp].get()[1]
+                ]
+                storage_changed_quota = [q for q in storage_changed_quota if q.fileset.startswith("vsc")]
+                logging.info(
+                    "Found %d accounts that have changed quota on storage %s in the accountpage since %s",
+                    len(storage_changed_quota),
                     storage_name,
-                    client,
-                    institute)
+                    last_timestamp,
+                )
+                (quota_ok, quota_fail) = process_users_quota(
+                    opts.options, storage_changed_quota, storage_name, client, institute
+                )
                 stats[f"{storage_name}_quota_sync"] = len(quota_ok)
                 stats[f"{storage_name}_quota_sync_fail"] = len(quota_fail)
                 stats[f"{storage_name}_quota_sync_fail_warning"] = STORAGE_QUOTA_LIMIT_WARNING
@@ -146,20 +148,22 @@ def main():
                 )
             )
 
-            logging.info("Found %d %s VOs that have changed in the accountpage since %s",
-                        len(changed_vos), institute, last_timestamp)
-            logging.info("Found %d %s VOs that have changed quota in the accountpage since %s",
-                        len(changed_vo_quota), institute, last_timestamp)
+            logging.info(
+                "Found %d %s VOs that have changed in the accountpage since %s",
+                len(changed_vos),
+                institute,
+                last_timestamp,
+            )
+            logging.info(
+                "Found %d %s VOs that have changed quota in the accountpage since %s",
+                len(changed_vo_quota),
+                institute,
+                last_timestamp,
+            )
             logging.debug(f"Found the following {institute} VOs: {vos}")
 
             for storage_name in opts.options.storage:
-                (vos_ok, vos_fail) = process_vos(
-                    opts.options,
-                    vos,
-                    storage_name,
-                    client,
-                    last_timestamp,
-                    institute)
+                (vos_ok, vos_fail) = process_vos(opts.options, vos, storage_name, client, last_timestamp, institute)
                 stats[f"{storage_name}_vos_sync"] = len(vos_ok)
                 stats[f"{storage_name}_vos_sync_fail"] = len(vos_fail)
                 stats[f"{storage_name}_vos_sync_fail_warning"] = STORAGE_VO_LIMIT_WARNING
@@ -176,5 +180,5 @@ def main():
     opts.epilogue(f"{institute} users and VOs synchronised", stats)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

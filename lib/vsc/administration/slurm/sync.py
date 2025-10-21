@@ -15,6 +15,7 @@
 """
 Functions to deploy users to slurm.
 """
+
 import logging
 
 from collections import defaultdict
@@ -22,14 +23,21 @@ from collections import defaultdict
 from vsc.config.base import GENT, INSTITUTE_VOS_BY_INSTITUTE, INSTITUTE_FAIRSHARE
 from vsc.utils.run import RunNoShell
 from vsc.administration.slurm.sacctmgr import (
-    create_add_account_command, create_remove_account_command,
+    create_add_account_command,
+    create_remove_account_command,
     create_change_account_fairshare_command,
-    create_add_user_command, create_change_user_command, create_remove_user_command, create_remove_user_account_command,
-    create_add_qos_command, create_remove_qos_command, create_modify_qos_command
-    )
+    create_add_user_command,
+    create_change_user_command,
+    create_remove_user_command,
+    create_remove_user_account_command,
+    create_add_qos_command,
+    create_remove_qos_command,
+    create_modify_qos_command,
+)
 from vsc.administration.slurm.scancel import (
-    create_remove_user_jobs_command, create_remove_jobs_for_account_command,
-    )
+    create_remove_user_jobs_command,
+    create_remove_jobs_for_account_command,
+)
 
 
 class SlurmSyncException(Exception):
@@ -56,7 +64,7 @@ def execute_commands(commands, allow_failure=False):
                 raise SCommandException(f"Command failed: {command}")
 
 
-TIER1_GPU_TO_CPU_HOURS_RATE = 12 # 12 cpus per gpu
+TIER1_GPU_TO_CPU_HOURS_RATE = 12  # 12 cpus per gpu
 
 
 def slurm_institute_accounts(slurm_account_info, clusters, host_institute, institute_vos):
@@ -67,8 +75,7 @@ def slurm_institute_accounts(slurm_account_info, clusters, host_institute, insti
     commands = []
     for cluster in clusters:
         cluster_accounts = [acct.Account for acct in slurm_account_info if acct and acct.Cluster == cluster]
-        for (inst, vo) in sorted(list(INSTITUTE_VOS_BY_INSTITUTE[host_institute].items())):
-
+        for inst, vo in sorted(list(INSTITUTE_VOS_BY_INSTITUTE[host_institute].items())):
             if inst not in cluster_accounts:
                 commands.append(
                     create_add_account_command(
@@ -76,7 +83,7 @@ def slurm_institute_accounts(slurm_account_info, clusters, host_institute, insti
                         parent=None,
                         cluster=cluster,
                         organisation=inst,
-                        fairshare=INSTITUTE_FAIRSHARE[host_institute][inst]
+                        fairshare=INSTITUTE_FAIRSHARE[host_institute][inst],
                     )
                 )
             if vo not in cluster_accounts:
@@ -86,7 +93,7 @@ def slurm_institute_accounts(slurm_account_info, clusters, host_institute, insti
                         parent=inst,
                         cluster=cluster,
                         organisation=inst,
-                        fairshare=institute_vos[vo].fairshare # needs to come from the AP
+                        fairshare=institute_vos[vo].fairshare,  # needs to come from the AP
                     )
                 )
 
@@ -94,11 +101,7 @@ def slurm_institute_accounts(slurm_account_info, clusters, host_institute, insti
 
 
 def get_cluster_accounts(slurm_account_info, cluster):
-    return {
-            acct.Account: int(acct.Share)
-            for acct in slurm_account_info
-            if acct and acct.Cluster == cluster
-        }
+    return {acct.Account: int(acct.Share) for acct in slurm_account_info if acct and acct.Cluster == cluster}
 
 
 def get_cluster_qos(slurm_qos_info, cluster):
@@ -112,17 +115,20 @@ def slurm_project_qos(projects, slurm_qos_info, clusters, protected_qos, qos_cle
     commands = []
     for cluster in clusters:
         cluster_qos_names = set(get_cluster_qos(slurm_qos_info, cluster)) - set(protected_qos)
-        project_qos_names = {
-            f"{cluster}-{p.name}" for p in projects
-        }
+        project_qos_names = {f"{cluster}-{p.name}" for p in projects}
 
         for project in projects:
             qos_name = f"{cluster}-{project.name}"
             if qos_name not in cluster_qos_names:
                 commands.append(create_add_qos_command(qos_name))
-            commands.append(create_modify_qos_command(qos_name, {
-                "GRPTRESMins": f"billing={60*int(project.credits)},gres/gpu={max(1, 60*int(project.gpu_hours))}",
-                }))
+            commands.append(
+                create_modify_qos_command(
+                    qos_name,
+                    {
+                        "GRPTRESMins": f"billing={60 * int(project.credits)},gres/gpu={max(1, 60 * int(project.gpu_hours))}",
+                    },
+                )
+            )
 
             # TODO: if we pass a cutoff date, we need to alter the hours if less was spent
 
@@ -155,22 +161,20 @@ def slurm_project_accounts(resource_app_projects, slurm_account_info, clusters, 
 
         for project_name in resource_app_project_names - cluster_accounts:
             if project_name not in cluster_accounts:
-                commands.append(create_add_account_command(
-                    account=project_name,
-                    parent="projects",  # in case we want to deploy on Tier-2 as well
-                    cluster=cluster,
-                    organisation=GENT,   # tier-1 projects run here :p
-                    qos=",".join([f"{cluster}-{project_name}"] + general_qos),
-                ))
+                commands.append(
+                    create_add_account_command(
+                        account=project_name,
+                        parent="projects",  # in case we want to deploy on Tier-2 as well
+                        cluster=cluster,
+                        organisation=GENT,  # tier-1 projects run here :p
+                        qos=",".join([f"{cluster}-{project_name}"] + general_qos),
+                    )
+                )
 
         for project_name in cluster_accounts - resource_app_project_names:
             if project_name not in protected_accounts:
-                commands.extend(create_remove_jobs_for_account_command(
-                    account=project_name,
-                    cluster=cluster))
-                commands.append(create_remove_account_command(
-                    account=project_name,
-                    cluster=cluster))
+                commands.extend(create_remove_jobs_for_account_command(account=project_name, cluster=cluster))
+                commands.append(create_remove_account_command(account=project_name, cluster=cluster))
 
     return commands
 
@@ -185,28 +189,31 @@ def slurm_vo_accounts(account_page_vos, slurm_account_info, clusters, host_insti
         cluster_accounts = get_cluster_accounts(slurm_account_info, cluster)
 
         for vo in account_page_vos:
-
             # skip the "default" VOs for our own institute
             if vo.vsc_id in INSTITUTE_VOS_BY_INSTITUTE[host_institute].values():
                 continue
 
             # create a new account for a VO that does not already have an account
             if vo.vsc_id not in cluster_accounts:
-                commands.append(create_add_account_command(
-                    account=vo.vsc_id,
-                    parent=vo.institute['name'],
-                    cluster=cluster,
-                    organisation=vo.institute['name'],
-                    fairshare=vo.fairshare,
-                ))
+                commands.append(
+                    create_add_account_command(
+                        account=vo.vsc_id,
+                        parent=vo.institute["name"],
+                        cluster=cluster,
+                        organisation=vo.institute["name"],
+                        fairshare=vo.fairshare,
+                    )
+                )
 
             # create update commands for VOs with a changed fairshare
             elif int(vo.fairshare) != cluster_accounts[vo.vsc_id]:
-                commands.append(create_change_account_fairshare_command(
-                    account=vo.vsc_id,
-                    cluster=cluster,
-                    fairshare=vo.fairshare,
-                ))
+                commands.append(
+                    create_change_account_fairshare_command(
+                        account=vo.vsc_id,
+                        cluster=cluster,
+                        fairshare=vo.fairshare,
+                    )
+                )
 
             # TODO: create removal commands when VOs go inactive
 
@@ -214,12 +221,8 @@ def slurm_vo_accounts(account_page_vos, slurm_account_info, clusters, host_insti
 
 
 def slurm_project_users_accounts(
-    project_members,
-    active_accounts,
-    slurm_user_info,
-    clusters,
-    protected_accounts,
-    default_account):
+    project_members, active_accounts, slurm_user_info, clusters, protected_accounts, default_account
+):
     """Check if the users are in the project account.
 
     For users in the project:
@@ -248,15 +251,16 @@ def slurm_project_users_accounts(
         obsolete_slurm_project_users = set()
         all_project_users = set()
 
-        for (members, project_name, project_partitions) in project_members:
-
+        for members, project_name, project_partitions in project_members:
             # these are the current Slurm users for this project
             slurm_project_users = {
-                (user, part) for (user, acct, part) in cluster_users_acct
+                (user, part)
+                for (user, acct, part) in cluster_users_acct
                 if acct == project_name and part in project_partitions
             }
             obsolete_slurm_project_users |= {
-                (user, acct, part) for (user, acct, part) in cluster_users_acct
+                (user, acct, part)
+                for (user, acct, part) in cluster_users_acct
                 if acct == project_name and part not in project_partitions
             }
             all_project_users |= {u for (u, _) in slurm_project_users}
@@ -264,13 +268,14 @@ def slurm_project_users_accounts(
             # these users are not yet in the Slurm DBD for this project
             new_users |= {
                 (user, project_name, part)
-                for (user, part) in
-                {(u, p) for u in (members & active_accounts) for p in project_partitions} - slurm_project_users
+                for (user, part) in {(u, p) for u in (members & active_accounts) for p in project_partitions}
+                - slurm_project_users
             }
 
             # these are the Slurm users that should no longer be associated with the project
             remove_project_users |= {
-                (user, project_name, part) for (user, acct, part) in cluster_users_acct
+                (user, project_name, part)
+                for (user, acct, part) in cluster_users_acct
                 if acct == project_name and (user not in members or part not in project_partitions)
             }
 
@@ -288,23 +293,28 @@ def slurm_project_users_accounts(
         cluster_users_with_default_account = {u for (u, a, _) in cluster_users_acct if a == default_account}
 
         # create associations in the default account for users that do not already have one
-        commands.extend([create_add_user_command(
-            user=user,
-            account=default_account,
-            default_account=default_account,
-            cluster=cluster,
-            partition=project_partition)
+        commands.extend([
+            create_add_user_command(
+                user=user,
+                account=default_account,
+                default_account=default_account,
+                cluster=cluster,
+                partition=project_partition,
+            )
             for (user, _, project_partition) in new_users
             if user not in cluster_users_with_default_account
         ])
 
         # create associations for the actual project's new users
-        commands.extend([create_add_user_command(
-            user=user,
-            account=project_name,
-            default_account=default_account,
-            cluster=cluster,
-            partition=project_partition) for (user, project_name, project_partition) in new_users
+        commands.extend([
+            create_add_user_command(
+                user=user,
+                account=project_name,
+                default_account=default_account,
+                cluster=cluster,
+                partition=project_partition,
+            )
+            for (user, project_name, project_partition) in new_users
         ])
 
         # these are the users not in any project, we should decide if we want any of those
@@ -314,7 +324,6 @@ def slurm_project_users_accounts(
             logging.warning(
                 "Number of slurm users not in projects: %d > 0: %s", len(remove_slurm_users), remove_slurm_users
             )
-
 
         # kick out users no longer in the project or whose partition changed
         commands.extend([
@@ -330,7 +339,8 @@ def slurm_project_users_accounts(
         # remove associations in the default account for users no longer in any project
         commands.extend([
             create_remove_user_account_command(user=user, account=default_account, cluster=cluster)
-            for user in cluster_users_with_default_account - all_project_users if user not in protected_users
+            for user in cluster_users_with_default_account - all_project_users
+            if user not in protected_users
         ])
 
     return commands
@@ -347,12 +357,12 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
 
     active_vo_members = set()
     reverse_vo_mapping = dict()
-    for (members, vo) in vo_members.values():
+    for members, vo in vo_members.values():
         # basic set arithmetic: take the intersection of the RHS sets and make the union with the LHS set
         active_vo_members |= members & active_accounts
 
         for m in members:
-            reverse_vo_mapping[m] = (vo.vsc_id, vo.institute['name'])
+            reverse_vo_mapping[m] = (vo.vsc_id, vo.institute["name"])
 
     remove_users = set()  # we do not make a disctinction between clusters
 
@@ -375,12 +385,10 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
         changed_users = set()
         moved_users = set()
 
-        for (vo_id, (members, vo)) in vo_members.items():
-
+        for vo_id, (members, vo) in vo_members.items():
             # these are users not yet in the Slurm DB for this cluster
             new_users |= {
-                (user, vo.vsc_id, vo.institute['name'])
-                for user in (members & active_accounts) - cluster_users
+                (user, vo.vsc_id, vo.institute["name"]) for user in (members & active_accounts) - cluster_users
             }
 
             # these are the current Slurm users per Account, i.e., the VO currently being processed
@@ -401,34 +409,25 @@ def slurm_user_accounts(vo_members, active_accounts, slurm_user_info, clusters, 
                         try:
                             moved_users.add((user, reverse_vo_mapping[user]))
                         except KeyError as err:
-                            logging.warning("Dry run, cannot find up user %s in reverse VO map: %s",
-                                            user, err)
+                            logging.warning("Dry run, cannot find up user %s in reverse VO map: %s", user, err)
 
         logging.debug("%d new users", len(new_users))
         logging.debug("%d removed users", len(remove_users))
         logging.debug("%d changed users", len(moved_users))
 
-        commands.extend([create_add_user_command(
-            user=user,
-            account=vo_id,
-            cluster=cluster,
-            default_account=vo_id) for (user, vo_id, _) in new_users
+        commands.extend([
+            create_add_user_command(user=user, account=vo_id, cluster=cluster, default_account=vo_id)
+            for (user, vo_id, _) in new_users
         ])
 
-        for (user, current_vo_id, (new_vo_id, _)) in moved_users:
+        for user, current_vo_id, (new_vo_id, _) in moved_users:
             [add, default_account, remove_jobs, remove_association_user] = create_change_user_command(
-                user=user,
-                current_vo_id=current_vo_id,
-                new_vo_id=new_vo_id,
-                cluster=cluster
+                user=user, current_vo_id=current_vo_id, new_vo_id=new_vo_id, cluster=cluster
             )
             commands.extend([add, default_account])
             association_remove_commands.append(remove_association_user)
             job_cancel_commands[user].append(remove_jobs)
 
-    association_remove_commands.extend([
-        create_remove_user_command(user=user) for user in remove_users
-    ])
-
+    association_remove_commands.extend([create_remove_user_command(user=user) for user in remove_users])
 
     return (job_cancel_commands, commands, association_remove_commands)

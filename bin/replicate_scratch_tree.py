@@ -40,22 +40,17 @@ SYNC_TIMESTAMP_FILENAME = f"/var/run/{NAGIOS_HEADER}.timestamp"
 
 
 def set_up_filesystem(
-        gpfs,
-        storage_settings,
-        storage,
-        filesystem_info,
-        filesystem_name,
-        vo_support=False,
-        dry_run=False):
+    gpfs, storage_settings, storage, filesystem_info, filesystem_name, vo_support=False, dry_run=False
+):
     """Set up the filesets and directories such that user, vo directories and friends can be created."""
 
     # Create the basic gent fileset
     logging.info("Replicating up for storage %s", storage)
-    fileset_name = storage_settings.path_templates[storage]['replica'][0]
-    fileset_path = os.path.join(filesystem_info['defaultMountPoint'], fileset_name)
+    fileset_name = storage_settings.path_templates[storage]["replica"][0]
+    fileset_path = os.path.join(filesystem_info["defaultMountPoint"], fileset_name)
 
     # if the replicat fileset does not exist, we create it, like a BAWS
-    if fileset_name not in [f['filesetName'] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
+    if fileset_name not in [f["filesetName"] for f in gpfs.gpfslocalfilesets[filesystem_name].values()]:
         if not dry_run:
             gpfs.make_fileset(fileset_path, fileset_name)
             gpfs.chmod(fileset_path, 0o755)
@@ -63,7 +58,6 @@ def set_up_filesystem(
 
     # create directories up to vsc42000
     for group in range(0, 21):
-
         group_path = os.path.join(fileset_path, f"vsc4{int(group):02}")
         if not os.path.exists(group_path):
             logging.info("Path %s does not exist. Creating directory.", group_path)
@@ -89,7 +83,6 @@ def set_up_filesystem(
                     logging.error("Problem creating dir %s: %s", user_path, err)
 
     if vo_support:
-
         vo_group_path = os.path.join(fileset_path, "gvo000")
 
         if not os.path.exists(vo_group_path):
@@ -97,7 +90,6 @@ def set_up_filesystem(
             os.chmod(vo_group_path, 0o755)
 
         for vo in range(1, 100):
-
             vo_name = f"gvo{int(vo):05}"
             try:
                 vo_group = grp.getgrnam(vo_name)
@@ -119,7 +111,7 @@ def set_up_filesystem(
 
             if not vo_moderator:
                 logging.error("Cannot find a moderator for VO %s", vo_name)
-                vo_moderator = pwd.getpwnam('nobody')
+                vo_moderator = pwd.getpwnam("nobody")
 
             if not os.path.exists(vo_path):
                 logging.info("Path %s does not exist. Creating directory.", vo_path)
@@ -131,7 +123,6 @@ def set_up_filesystem(
                     logging.error("Problem creating dir %s", vo_path)
 
             for member_name in vo_members:
-
                 member_path = os.path.join(vo_path, member_name)
                 try:
                     member = pwd.getpwnam(member_name)
@@ -157,8 +148,8 @@ def main():
     """
 
     options = {
-        'nagios-check-interval-threshold': NAGIOS_CHECK_INTERVAL_THRESHOLD,
-        'storage': ('storage systems on which to deploy users and vos', None, 'extend', []),
+        "nagios-check-interval-threshold": NAGIOS_CHECK_INTERVAL_THRESHOLD,
+        "storage": ("storage systems on which to deploy users and vos", None, "extend", []),
     }
 
     opts = ExtendedSimpleOption(options)
@@ -171,12 +162,18 @@ def main():
         gpfs.list_filesets()
 
         for storage_name in opts.options.storage:
-
             filesystem_name = storage_settings[storage_name].filesystem
             filesystem_info = gpfs.get_filesystem_info(filesystem_name)
 
-            set_up_filesystem(gpfs, storage_settings, storage_name, filesystem_info, filesystem_name, vo_support=True,
-                              dry_run=opts.options.dry_run)
+            set_up_filesystem(
+                gpfs,
+                storage_settings,
+                storage_name,
+                filesystem_info,
+                filesystem_name,
+                vo_support=True,
+                dry_run=opts.options.dry_run,
+            )
 
     except Exception as err:
         logging.exception("critical exception caught: %s", err)
@@ -186,5 +183,5 @@ def main():
     opts.epilogue("UGent users and VOs synchronised", stats)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

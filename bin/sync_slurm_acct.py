@@ -26,8 +26,11 @@ from vsc.accountpage.client import AccountpageClient
 from vsc.accountpage.wrappers import mkVo
 from vsc.administration.slurm.sacctmgr import get_slurm_sacct_info, SacctMgrTypes
 from vsc.administration.slurm.sync import (
-    execute_commands, slurm_institute_accounts, slurm_vo_accounts, slurm_user_accounts,
-    )
+    execute_commands,
+    slurm_institute_accounts,
+    slurm_vo_accounts,
+    slurm_user_accounts,
+)
 from vsc.config.base import GENT, VSC_SLURM_CLUSTERS, INSTITUTE_VOS_BY_INSTITUTE, PRODUCTION, PILOT
 from vsc.utils.nagios import NAGIOS_EXIT_CRITICAL
 from vsc.utils.script_tools import ExtendedSimpleOption
@@ -40,6 +43,7 @@ SYNC_TIMESTAMP_FILENAME = f"/var/cache/{NAGIOS_HEADER}.timestamp"
 SYNC_SLURM_ACCT_LOGFILE = f"/var/log/{NAGIOS_HEADER}.log"
 
 MAX_USERS_JOB_CANCEL = 40
+
 
 class SyncSanityError(Exception):
     pass
@@ -59,7 +63,7 @@ def main():
             "store",
             "https://apivsc.ugent.be/django",
         ),
-        'host_institute': ('Name of the institute where this script is being run', str, 'store', GENT),
+        "host_institute": ("Name of the institute where this script is being run", str, "store", GENT),
         "clusters": (
             "Cluster(s) (comma-separated) to sync for. "
             "Overrides <host_institute>_SLURM_COMPUTE_CLUSTERS that are in production.",
@@ -67,18 +71,18 @@ def main():
             "store",
             [],
         ),
-        'start_timestamp': ('Timestamp to start the sync from', str, 'store', None),
-        'cluster_classes': (
-            'Classes of clusters that should be synced, comma-separated',
+        "start_timestamp": ("Timestamp to start the sync from", str, "store", None),
+        "cluster_classes": (
+            "Classes of clusters that should be synced, comma-separated",
             "strlist",
-            'store',
-            [PRODUCTION, PILOT]
+            "store",
+            [PRODUCTION, PILOT],
         ),
-        'force': (
-            'Force the sync instead of bailing if too many scancel commands would be issues',
+        "force": (
+            "Force the sync instead of bailing if too many scancel commands would be issues",
             None,
-            'store_true',
-            False
+            "store_true",
+            False,
         ),
     }
 
@@ -86,8 +90,8 @@ def main():
     stats = {}
 
     (last_timestamp, start_time) = retrieve_timestamp_with_default(
-        SYNC_TIMESTAMP_FILENAME,
-        start_timestamp=opts.options.start_timestamp)
+        SYNC_TIMESTAMP_FILENAME, start_timestamp=opts.options.start_timestamp
+    )
     logging.info("Using timestamp %s", last_timestamp)
     logging.info("Using startime %s", start_time)
 
@@ -104,10 +108,7 @@ def main():
         if opts.options.clusters:
             clusters = opts.options.clusters
         else:
-            clusters = [cs
-                for p in opts.options.cluster_classes
-                for cs in VSC_SLURM_CLUSTERS[host_institute][p]
-            ]
+            clusters = [cs for p in opts.options.cluster_classes for cs in VSC_SLURM_CLUSTERS[host_institute][p]]
         sacctmgr_commands = []
 
         # All users belong to a VO, so fetching the VOs is necessary/
@@ -115,9 +116,7 @@ def main():
 
         # make sure the institutes and the default accounts (VOs) are there for each cluster
         institute_vos = {
-            v.vsc_id: v
-            for v in account_page_vos
-            if v.vsc_id in INSTITUTE_VOS_BY_INSTITUTE[host_institute].values()
+            v.vsc_id: v for v in account_page_vos if v.vsc_id in INSTITUTE_VOS_BY_INSTITUTE[host_institute].values()
         }
         sacctmgr_commands += slurm_institute_accounts(slurm_account_info, clusters, host_institute, institute_vos)
 
@@ -132,11 +131,7 @@ def main():
 
         # process VO members
         (job_cancel_commands, user_commands, association_remove_commands) = slurm_user_accounts(
-            account_page_members,
-            active_accounts,
-            slurm_user_info,
-            clusters,
-            opts.options.dry_run
+            account_page_members, active_accounts, slurm_user_info, clusters, opts.options.dry_run
         )
 
         # Adding users takes priority
@@ -148,7 +143,6 @@ def main():
         else:
             logging.info("Executing %d commands", len(sacctmgr_commands))
             execute_commands(sacctmgr_commands)
-
 
         # safety to avoid emptying the cluster due to some error upstream
         if not opts.options.force and len(job_cancel_commands) > MAX_USERS_JOB_CANCEL:
