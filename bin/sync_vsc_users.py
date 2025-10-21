@@ -35,7 +35,7 @@ from vsc.accountpage.client import AccountpageClient
 from vsc.accountpage.wrappers import mkVscUserSizeQuota
 from vsc.administration.user import process_users, process_users_quota
 from vsc.administration.vo import process_vos
-from vsc.config.base import GENT
+from vsc.config.base import ACTIVE, GENT
 from vsc.utils.missing import nub
 from vsc.utils.nagios import NAGIOS_EXIT_CRITICAL
 from vsc.utils.script_tools import ExtendedSimpleOption
@@ -137,9 +137,14 @@ def main():
         if opts.options.vo:
             changed_vos = client.vo.institute[institute].modified[last_timestamp].get()[1]
             changed_vo_quota = client.quota.vo.modified[last_timestamp].get()[1]
+            qvos = [client.vo[v["virtual_organisation"]].get()[1] for v in changed_vo_quota]
 
-            vos = sorted(set([v['vsc_id'] for v in changed_vos] +
-                             [v['virtual_organisation'] for v in changed_vo_quota]))
+            vos = sorted(
+                set(
+                    [v["vsc_id"] for v in changed_vos if v["status"] == ACTIVE]
+                    + [v["vsc_id"] for v in qvos if v["status"] == ACTIVE]
+                )
+            )
 
             logging.info("Found %d %s VOs that have changed in the accountpage since %s",
                         len(changed_vos), institute, last_timestamp)
