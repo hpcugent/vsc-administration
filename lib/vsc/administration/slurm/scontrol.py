@@ -1,5 +1,5 @@
 #
-# Copyright 2022-2025 Ghent University
+# Copyright 2022-2026 Ghent University
 #
 # This file is part of vsc-administration,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -161,13 +161,17 @@ def parse_scontrol_dump(lines, info_type):
     return info
 
 
-def get_scontrol_info(info_type, as_dict=True):
+def get_scontrol_info(info_type, as_dict=True, cluster=None):
     """Get slurm info for the given clusterself.
 
     @param info_type: ScontrolTypes
     """
-    (exitcode, contents) = asyncloop([
-        SLURM_SCONTROL,
+    SCONTROL_COMMAND = [SLURM_SCONTROL]
+
+    if cluster is not None:
+        SCONTROL_COMMAND.extend([f'--cluster={cluster}'])
+
+    (exitcode, contents) = asyncloop(SCONTROL_COMMAND + [
         "show",
         info_type.value,
         "--detail",
@@ -194,9 +198,9 @@ def get_scontrol_info(info_type, as_dict=True):
     return info
 
 
-def get_scontrol_config():
+def get_scontrol_config(cluster=None):
     """Return the scontrol config namedtuple"""
-    return get_scontrol_info(ScontrolTypes.config, as_dict=False).pop()
+    return get_scontrol_info(ScontrolTypes.config, as_dict=False, cluster=cluster).pop()
 
 
 def make_license_reservation_name(licname):
