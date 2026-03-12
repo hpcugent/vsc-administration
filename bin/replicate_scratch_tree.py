@@ -61,32 +61,38 @@ def set_up_filesystem(
             gpfs.chmod(fileset_path, 0o755)
         logging.info("Fileset %s created and linked at %s", fileset_name, fileset_path)
 
+
     # create directories up to vsc42000
-    for group in range(0, 21):
+    group_ranges = {
+        '4': range(0,99),
+        '5': range(0,99),  # can we simply precreate them anyway?
+    }
+    for (p, group_range) in group_ranges.items():
+        for group in group_range:
 
-        group_path = os.path.join(fileset_path, f"vsc4{int(group):02}")
-        if not os.path.exists(group_path):
-            logging.info("Path %s does not exist. Creating directory.", group_path)
-            try:
-                if not dry_run:
-                    os.mkdir(group_path)
-                    os.chmod(group_path, 0o755)
-            except OSError as err:
-                logging.error("Problem creating dir %s [%s]", group_path, err)
-
-        for user in range(0, 100):
-            user_name = f"vsc4{int(group):02}{int(user):02}"
-            user_id = 2540000 + group * 100 + user
-            user_path = os.path.join(group_path, user_name)
-            if not os.path.exists(user_path):
-                logging.info("Path %s does not exist. Creating directory.", user_path)
+            group_path = os.path.join(fileset_path, f"vsc{p}{int(group):02}")
+            if not os.path.exists(group_path):
+                logging.info("Path %s does not exist. Creating directory.", group_path)
                 try:
                     if not dry_run:
-                        os.mkdir(user_path)
-                        os.chown(user_path, user_id, user_id)
-                        os.chmod(user_path, 0o700)
+                        os.mkdir(group_path)
+                        os.chmod(group_path, 0o755)
                 except OSError as err:
-                    logging.error("Problem creating dir %s: %s", user_path, err)
+                    logging.error("Problem creating dir %s [%s]", group_path, err)
+
+            for user in range(0, 100):
+                user_name = f"vsc4{int(group):02}{int(user):02}"
+                user_id = 2540000 + group * 100 + user
+                user_path = os.path.join(group_path, user_name)
+                if not os.path.exists(user_path):
+                    logging.info("Path %s does not exist. Creating directory.", user_path)
+                    try:
+                        if not dry_run:
+                            os.mkdir(user_path)
+                            os.chown(user_path, user_id, user_id)
+                            os.chmod(user_path, 0o700)
+                    except OSError as err:
+                        logging.error("Problem creating dir %s: %s", user_path, err)
 
     if vo_support:
 
