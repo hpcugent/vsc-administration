@@ -36,7 +36,7 @@ from vsc.administration.tools import quota_limits
 from vsc.config.base import (
     VSC, VSC_HOME, VSC_DATA, VSC_DATA_SHARED, NEW, MODIFIED, MODIFY, ACTIVE, GENT, DATA_KEY, SCRATCH_KEY,
     DEFAULT_VOS_ALL, VSC_PRODUCTION_SCRATCH, INSTITUTE_VOS_BY_INSTITUTE, VO_SHARED_PREFIX_BY_INSTITUTE,
-    VO_PREFIX_BY_INSTITUTE, STORAGE_SHARED_SUFFIX
+    VO_PREFIX_BY_INSTITUTE, STORAGE_ACL_VO_MOD_GRP_KEY, STORAGE_SHARED_SUFFIX,
 )
 from vsc.utils.missing import Monoid, MonoidDict
 
@@ -92,7 +92,7 @@ class VscTier2AccountpageVo(VscAccountPageVo, VscTier2Accountpage):
         self._vo_data_shared_quota_cache = None
         self._vo_scratch_quota_cache = None
         self._institute_quota_cache = None
-
+        self._modgroup_cache = None
         self._sharing_group_cache = None
 
     @property
@@ -164,6 +164,20 @@ class VscTier2AccountpageVo(VscAccountPageVo, VscTier2Accountpage):
         """Return a list with all the VO members in it."""
         return self.vo.members
 
+    @property
+    def modgroup(self):
+        """
+        Return dict with Moderator group of the VO
+        {vsc_id: str, vsc_id_number: int, status: str, institute: {name: str},
+         members: [], moderators: [], description: str, active: bool, isactive: bool}
+        """
+        if not self._modgroup_cache:
+            self._modgroup_cache = whenHTTPErrorRaise(
+            self.rest_client.vo[self.vo.vsc_id].modgroup.get,
+            f"Could not get modgroup information from accountpage for VO {self.vo.vsc_id}"
+        )[1]
+        return self._modgroup_cache
+
     def _get_path(self, storage_name, mount_point=MOUNT_POINT_DEFAULT):
         """Get the path for the (if any) user directory on the given storage."""
         (path, _) = self.storage.path_templates[self.host_institute][storage_name]['vo'](self.vo.vsc_id)
@@ -199,6 +213,16 @@ class VscTier2AccountpageVo(VscAccountPageVo, VscTier2Accountpage):
             storage.operator().chown(pwd.getpwnam('nobody').pw_uid, fileset_group_owner_id, path)
         else:
             storage.operator().chown(moderator.vsc_id_number, fileset_group_owner_id, path)
+
+        # add ACLs to control access to VO by moderator group
+        if storage.acl_permissions_vo:
+            # replace placeholders in ACLs with actual values
+            acl_template_values = {
+                STORAGE_ACL_VO_MOD_GRP_KEY: self.modgroup['vsc_id_number'],
+            }
+            acl_rules = [rule.format(**acl_template_values) for rule in storage.acl_permissions_vo]
+            logging.debug(f"Setting ACLs on VO {self.vo.vsc_id} root directory: {', '.join(acl_rules)}")
+            storage.operator().replace_acl(path, acl_rules)
 
     def create_data_fileset(self):
         """Create the VO's directory on the HPC data filesystem. Always set the quota."""
