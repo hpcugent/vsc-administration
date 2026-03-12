@@ -198,9 +198,9 @@ def get_scontrol_info(info_type, as_dict=True, cluster=None):
     return info
 
 
-def get_scontrol_config():
+def get_scontrol_config(cluster=None):
     """Return the scontrol config namedtuple"""
-    return get_scontrol_info(ScontrolTypes.config, as_dict=False).pop()
+    return get_scontrol_info(ScontrolTypes.config, as_dict=False, cluster=cluster).pop()
 
 
 def make_license_reservation_name(licname):

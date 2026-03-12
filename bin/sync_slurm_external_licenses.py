@@ -148,6 +148,7 @@ def licenses_data(config_filename, default_tool):
     with open(config_filename) as fh:
         all_extern_data = json.load(fh)
 
+
     all_externs = sorted(all_extern_data.keys())  # sorted for reproducible tests
     for extern in all_externs:
         edata = all_extern_data[extern]
@@ -265,29 +266,32 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
         rlicenses[make_license_reservation_name(licname)] = lic
 
     # Check this is the correct cluster
-    #   in theory, we can also issue all scontrol commands with extra "cluster name_of_cluster" args
-    slurm_config = get_scontrol_config()
+    # in theory, we can also issue all scontrol commands with extra "cluster name_of_cluster" args
+    # scontrol without cluster does not work on tier1, from sync51
+    slurm_config = get_scontrol_config(cluster=cluster)
     if cluster != slurm_config.ClusterName:
         logging.error("Expected cluster %s, got %s (%s)", cluster, slurm_config.ClusterName, slurm_config)
         raise Exception("Wrong cluster")
 
-    partitions = get_scontrol_info(ScontrolTypes.partition)
+    partitions = get_scontrol_info(ScontrolTypes.partition, cluster=cluster)
     if partition not in partitions:
         logging.error("Expected partiton %s, only have %s", partition, partitions)
         raise Exception("Wrong partition")
 
-
     # Get the licenses
     #    This cluster should see all licenses, incl their usage
     # Convert to dict with reservation names
-    lics = {make_license_reservation_name(k): v for k, v in get_scontrol_info(ScontrolTypes.license).items()}
+    lics = {
+        make_license_reservation_name(k): v
+        for k, v in get_scontrol_info(ScontrolTypes.license, cluster=cluster).items()
+    }
     logging.debug("Existing licenses %s", lics)
 
     # Get all existing license reservations
     #    only license reservations
     #       remove the ignore_reservations also
     # The LICENSE_ONLY flag does not show up in flags
-    ress = {k: v for k, v in get_scontrol_info(ScontrolTypes.reservation).items()
+    ress = {k: v for k, v in get_scontrol_info(ScontrolTypes.reservation, cluster=cluster).items()
                  if v.Licenses is not None
                  and v.ReservationName.startswith(LICENSE_RESERVATION_PREFIX)
                  and k not in ignore_reservations
