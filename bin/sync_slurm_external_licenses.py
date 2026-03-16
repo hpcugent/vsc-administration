@@ -230,8 +230,15 @@ def update_licenses(licenses, clusters, ignore_resources, force_update):
     for name in new:
         lic = licenses[name]
         logging.debug("Command to add new license resource %s", lic)
-        new_update_cmds.append(create_add_resource_license_command(
-            lic['name'], lic['extern'], lic['type'], clusters, lic['count']))
+        new_update_cmds.append(
+            create_add_resource_license_command(
+                lic['name'],
+                lic['extern'],
+                lic['type'],
+                clusters,
+                lic['count']
+            )
+        )
 
     for name in update:
         lic = licenses[name]
@@ -319,7 +326,7 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
         lic = rlicenses[res]
         logging.debug("Command to add new license reservation %s", lic)
         # no reservation yet, in_use is the starting value
-        new_update_cmds.append(create_create_license_reservation(lic['fullname'], lic['in_use'], partition))
+        new_update_cmds.append(create_create_license_reservation(lic['fullname'], lic['in_use'], partition, cluster=cluster))
 
     for res in update:
         lic = rlicenses[res]
@@ -343,13 +350,13 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
             value = in_use - used
 
         if force_update or value != current_value:
-            new_update_cmds.append(create_update_license_reservation(lic['fullname'], value))
+            new_update_cmds.append(create_update_license_reservation(lic['fullname'], value, cluster=cluster))
 
     # Cleanup reservations
     remove_cmds = []
     for res in remove:
         logging.debug("Command to remove license reservation %s", res)
-        remove_cmds.append(create_delete_reservation(res))
+        remove_cmds.append(create_delete_reservation(res, cluster=cluster))
 
     return new_update_cmds, remove_cmds
 
