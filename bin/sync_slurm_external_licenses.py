@@ -171,10 +171,10 @@ def licenses_data(config_filename, default_tool):
             edata['command_options']
         )
 
-        eknown = {k.lower() for k in lics}
+        eknown = { k.lower() for k in lics }
 
         software = edata['software']
-        econfig = { k.lower() for k in software}
+        econfig = { k.lower() for k in software }
 
         missing = econfig - eknown
         if missing:
