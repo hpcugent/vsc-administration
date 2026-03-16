@@ -99,11 +99,19 @@ def mkSlurmPartition(fields):
     return lic
 
 
+def base_scontrol_command(cluster=None):
+    """Base scontrol command with cluster if needed."""
+    command = [SLURM_SCONTROL]
+    if cluster is not None:
+        command.extend([f'--cluster={cluster}'])
+    return command
+
 def mkscontrol(mode):
-    """Decorator to prefix common sacctmgr code for mode"""
+    """Decorator to prefix common scontrol code for mode"""
     def decorator(function):
         def wrapper(*args, **kwargs):
-            prefix = [SLURM_SCONTROL, mode]
+            cluster = kwargs.get('cluster', None)
+            prefix = base_scontrol_command(cluster) + [mode]
             return prefix + function(*args, **kwargs)
         return wrapper
     return decorator
@@ -166,10 +174,7 @@ def get_scontrol_info(info_type, as_dict=True, cluster=None):
 
     @param info_type: ScontrolTypes
     """
-    SCONTROL_COMMAND = [SLURM_SCONTROL]
-
-    if cluster is not None:
-        SCONTROL_COMMAND.extend([f'--cluster={cluster}'])
+    SCONTROL_COMMAND = base_scontrol_command(cluster)
 
     (exitcode, contents) = asyncloop(SCONTROL_COMMAND + [
         "show",
@@ -214,7 +219,7 @@ def _settings_args(settings):
 
 
 @mkscontrol('create')
-def create_create_reservation(reservation, settings):
+def create_create_reservation(reservation, settings, cluster=None):  # noqa: C901
     """
     Creates the command to update a reservation
     """
@@ -228,7 +233,7 @@ def create_create_reservation(reservation, settings):
 
 
 @mkscontrol('update')
-def create_update_reservation(reservation, settings):
+def create_update_reservation(reservation, settings, cluster=None):   # noqa: C901
     """
     Creates the command to update a reservation
     """
@@ -243,7 +248,7 @@ def create_update_reservation(reservation, settings):
 
 
 @mkscontrol('delete')
-def create_delete_reservation(reservation):
+def create_delete_reservation(reservation, cluster=None):   # noqa: C901
     """
     Creates the command to delete a reservation
     """
@@ -254,7 +259,7 @@ def create_delete_reservation(reservation):
     return command
 
 
-def create_create_license_reservation(licname, value, partition):
+def create_create_license_reservation(licname, value, partition, cluster=None):
     """
     Creates the command to create a license reservation
     """
@@ -270,11 +275,10 @@ def create_create_license_reservation(licname, value, partition):
         'Flags': 'LICENSE_ONLY',
         'NodeCnt': '0',  # otherwise all nodes are placed in the reservation
     }
+    return create_create_reservation(name, settings, cluster)
 
-    return create_create_reservation(name, settings)
 
-
-def create_update_license_reservation(licname, value):
+def create_update_license_reservation(licname, value, cluster=None):
     """
     Creates the command to update a license reservation
     """
@@ -282,4 +286,4 @@ def create_update_license_reservation(licname, value):
     settings = {
         'Licenses': f'{licname}:{value}',
     }
-    return create_update_reservation(name, settings)
+    return create_update_reservation(name, settings, cluster)

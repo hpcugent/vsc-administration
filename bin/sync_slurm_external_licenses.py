@@ -91,7 +91,7 @@ def _parse_lmutil(output):
     return res
 
 
-def retrieve_license_data(license_type, tool, server, port, command_options):
+def retrieve_license_data(license_type, tool, server, port, command_options) -> dict:
     """
     Run tool to retrieve all license data from server/port.
     Return dict with key the toolname and value another dict with total and in_use as keys
@@ -117,7 +117,7 @@ def retrieve_license_data(license_type, tool, server, port, command_options):
 
         #  For every toolname, add total and in_use
         for data in parsed:
-            name = data.pop('name')
+            name = data.pop('name').lower()
             res[name] = data
     else:
         res = None
@@ -171,10 +171,10 @@ def licenses_data(config_filename, default_tool):
             edata['command_options']
         )
 
-        eknown = set(lics.keys())
+        eknown = { k.lower() for k in lics }
 
         software = edata['software']
-        econfig = set(software.keys())
+        econfig = { k.lower() for k in software }
 
         missing = econfig - eknown
         if missing:
