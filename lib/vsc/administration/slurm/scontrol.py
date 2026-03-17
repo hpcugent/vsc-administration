@@ -275,7 +275,7 @@ def create_create_license_reservation(licname, value, partition, cluster=None):
         'Flags': 'LICENSE_ONLY',
         'NodeCnt': '0',  # otherwise all nodes are placed in the reservation
     }
-    return create_create_reservation(name, settings, cluster)
+    return create_create_reservation(name, settings, cluster=cluster)
 
 
 def create_update_license_reservation(licname, value, cluster=None):
@@ -286,4 +286,4 @@ def create_update_license_reservation(licname, value, cluster=None):
     settings = {
         'Licenses': f'{licname}:{value}',
     }
-    return create_update_reservation(name, settings, cluster)
+    return create_update_reservation(name, settings, cluster=cluster)

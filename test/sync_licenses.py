@@ -239,9 +239,9 @@ ReservationName=external_license_ano-1@ano-comp1 StartTime=2022-04-29T12:01:11 E
 
         logging.debug("new_update %s remove %s", nw_up, rem)
         self.assertEqual(nw_up, [
-            ['/usr/bin/scontrol', 'create', 'reservation', 'ReservationName=external_license_an-4@ano-comp2', 'Duration=7300-0:0:0', 'Flags=LICENSE_ONLY', 'Licenses=an-4@ano-comp2:5', 'NodeCnt=0', 'Partition=mypart', 'Start=now', 'User=root'],
-            ['/usr/bin/scontrol', 'update', 'reservation', 'ReservationName=external_license_ano-1@ano-comp1', 'Licenses=ano-1@ano-comp1:20'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'create', 'reservation', 'ReservationName=external_license_an-4@ano-comp2', 'Duration=7300-0:0:0', 'Flags=LICENSE_ONLY', 'Licenses=an-4@ano-comp2:5', 'NodeCnt=0', 'Partition=mypart', 'Start=now', 'User=root'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'update', 'reservation', 'ReservationName=external_license_ano-1@ano-comp1', 'Licenses=ano-1@ano-comp1:20'],
         ])
         self.assertEqual(rem, [
-            ['/usr/bin/scontrol', 'delete', 'reservation', 'ReservationName=external_license_comsol3@bogus2'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation', 'ReservationName=external_license_comsol3@bogus2'],
         ])

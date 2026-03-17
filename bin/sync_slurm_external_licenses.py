@@ -352,7 +352,7 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
         if force_update or value != current_value:
             new_update_cmds.append(create_update_license_reservation(lic['fullname'], value, cluster=cluster))
 
-    # Cleanup reservations
+    # Clean up reservations
     remove_cmds = []
     for res in remove:
         logging.debug("Command to remove license reservation %s", res)
