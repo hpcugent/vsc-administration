@@ -22,7 +22,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from collections import namedtuple
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from vsc.install.testing import TestCase
 import shutil
 from sync_vsc_email_postfix import VscPostfixSync

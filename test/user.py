@@ -22,7 +22,7 @@ import os
 
 from collections import namedtuple
 
-import mock
+from unittest import mock
 
 import vsc.administration.user as user
 import vsc.config.base as config
