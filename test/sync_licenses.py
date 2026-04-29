@@ -25,7 +25,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from collections import namedtuple
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from vsc.install.testing import TestCase
 
 from sync_slurm_external_licenses import (

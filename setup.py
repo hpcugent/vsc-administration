@@ -32,10 +32,9 @@ install_requires = [
 ]
 
 PACKAGE = {
-    'version': '4.14.1',
+    'version': '4.14.2',
     'author': [ag, jt, sdw, wdp],
     'maintainer': [ag],
-    'tests_require': ['mock'],
     'setup_requires': [
         'vsc-install >= 0.15.3',
     ],

@@ -21,7 +21,7 @@ import logging
 #  see SetUp
 logging.basicConfig(level=logging.DEBUG)
 
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from vsc.install.testing import TestCase
 
 from vsc.administration.slurm.scontrol import (

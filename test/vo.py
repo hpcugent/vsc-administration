@@ -23,8 +23,8 @@ import pwd
 
 from collections import namedtuple
 
-import mock
-from mock import patch
+from unittest import mock
+from unittest.mock import patch
 
 import vsc.administration.vo as vo
 import vsc.config.base as config
