@@ -265,6 +265,9 @@ def update_licenses(licenses, clusters, ignore_resources, force_update):
 def update_license_reservations(licenses, cluster, partition, ignore_reservations, force_update):
     """
     Create/update the license reservations for each cluster
+
+    Since slurm 26.05, it is no longer possible to set the usage to 0. In that case, the reservation is removed.
+    If the reservation is not present, it is created.
     """
     # convert licenses to dict with reservation names
     rlicenses = {}
@@ -351,7 +354,10 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
         else:
             value = in_use - used
 
-        if force_update or value != current_value:
+        if value == 0:
+            remove.append(res)  # this will be handled by the remove_cmds loop
+            logging.debug("License reservation %s count is zero, will be slated for removal", res)
+        elif force_update or value != current_value:
             new_update_cmds.append(create_update_license_reservation(lic['fullname'], value, cluster=cluster))
 
     # Clean up reservations

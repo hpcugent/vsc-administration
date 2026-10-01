@@ -186,6 +186,8 @@ an-5|ano-comp2|License|20|10|flexlm
                                'name': 'an-4', 'type': 'flexlm'},
             'an-5@ano-comp2': {'count': 7, 'skip': True, 'extern': 'ano-comp2',
                                'name': 'an-5', 'type': 'flexlm'},
+            'ano-2@ano-comp1': {'count': 10, 'in_use': 3, 'total': 10, 'extern': 'ano-comp1',
+                                            'name': 'ano-2', 'type': 'strange'},
         }
 
         scontrol_config = """Configuration data as of 2022-04-27T10:07:02
@@ -219,12 +221,14 @@ CgroupMountpoint        = (null)
         scontrol_lic = """LicenseName=comsol3@bogus Total=2 Used=0 Free=2 Reserved=0 Remote=yes
 LicenseName=comsol3@bogus2 Total=20 Used=0 Free=20 Reserved=4 Remote=yes
 LicenseName=ano-1@ano-comp1 Total=120 Used=0 Free=120 Reserved=4 Remote=yes
+LicenseName=ano-2@ano-comp1 Total=10 Used=3 Free=7 Reserved=2 Remote=yes
 """
 
         scontrol_res = """ReservationName=hpc123 StartTime=2022-03-28T16:05:00 EndTime=2028-05-28T07:59:59 Duration=2252-15:54:59 Nodes=node123,node456 NodeCnt=2 CoreCnt=512 Features=(null) PartitionName=(null) Flags=MAINT,IGNORE_JOBS,SPEC_NODES TRES=cpu=512 Users=vscabc,vscdef Groups=(null) Accounts=(null) Licenses=(null) State=ACTIVE BurstBuffer=(null) Watts=n/a MaxStartDelay=(null)
 ReservationName=hellohello StartTime=2022-04-19T08:00:00 EndTime=2022-05-19T08:00:00 Duration=30-00:00:00 Nodes=nodeone,nodetwo,nodethree,nodefour NodeCnt=4 CoreCnt=8 Features=(null) PartitionName=party Flags= TRES=cpu=8 Users=(null) Groups=groupies Accounts=myaccount Licenses=(null) State=ACTIVE BurstBuffer=(null) Watts=n/a MaxStartDelay=(null)
 ReservationName=external_license_comsol3@bogus2 StartTime=2022-04-29T12:01:11 EndTime=2023-04-29T12:01:11 Duration=365-00:00:00 Nodes=(null) NodeCnt=0 CoreCnt=0 Features=(null) PartitionName=cubone Flags=ANY_NODES TRES=(null) Users=root Groups=(null) Accounts=(null) Licenses=comsol3@bogus2:4 State=ACTIVE BurstBuffer=(null) Watts=n/a MaxStartDelay=(null)
 ReservationName=external_license_ano-1@ano-comp1 StartTime=2022-04-29T12:01:11 EndTime=2023-04-29T12:01:11 Duration=365-00:00:00 Nodes=(null) NodeCnt=0 CoreCnt=0 Features=(null) PartitionName=cubone Flags=ANY_NODES TRES=(null) Users=root Groups=(null) Accounts=(null) Licenses=ano-1@ano-comp1:4 State=ACTIVE BurstBuffer=(null) Watts=n/a MaxStartDelay=(null)
+ReservationName=external_license_ano-2@ano-comp1 StartTime=2022-04-29T12:01:11 EndTime=2023-04-29T12:01:11 Duration=365-00:00:00 Nodes=(null) NodeCnt=0 CoreCnt=0 Features=(null) PartitionName=cubone Flags=ANY_NODES TRES=(null) Users=root Groups=(null) Accounts=(null) Licenses=ano-2@ano-comp1:2 State=ACTIVE BurstBuffer=(null) Watts=n/a MaxStartDelay=(null)
 """
 
         masync.side_effect = [
@@ -244,4 +248,5 @@ ReservationName=external_license_ano-1@ano-comp1 StartTime=2022-04-29T12:01:11 E
         ])
         self.assertEqual(rem, [
             ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation', 'ReservationName=external_license_comsol3@bogus2'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation', 'ReservationName=external_license_ano-2@ano-comp1'],
         ])
