@@ -253,8 +253,7 @@ def create_delete_reservation(reservation, cluster=None):   # noqa: C901
     Creates the command to delete a reservation
     """
     command = [
-        'reservation',
-        f'ReservationName={reservation}',
+        f'reservation={reservation}'
     ]
     return command
 
