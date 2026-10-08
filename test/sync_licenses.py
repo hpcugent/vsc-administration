@@ -247,6 +247,6 @@ ReservationName=external_license_ano-2@ano-comp1 StartTime=2022-04-29T12:01:11 E
             ['/usr/bin/scontrol', '--cluster=mycluster', 'update', 'reservation', 'ReservationName=external_license_ano-1@ano-comp1', 'Licenses=ano-1@ano-comp1:20'],
         ])
         self.assertEqual(rem, [
-            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation', 'ReservationName=external_license_comsol3@bogus2'],
-            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation', 'ReservationName=external_license_ano-2@ano-comp1'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation=external_license_comsol3@bogus2'],
+            ['/usr/bin/scontrol', '--cluster=mycluster', 'delete', 'reservation=external_license_ano-2@ano-comp1'],
         ])

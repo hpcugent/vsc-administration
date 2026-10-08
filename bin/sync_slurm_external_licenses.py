@@ -327,11 +327,12 @@ def update_license_reservations(licenses, cluster, partition, ignore_reservation
 
     for res in new:
         lic = rlicenses[res]
-        logging.debug("Command to add new license reservation %s", lic)
-        # no reservation yet, in_use is the starting value
-        new_update_cmds.append(
-            create_create_license_reservation(lic['fullname'], lic['in_use'], partition, cluster=cluster)
-        )
+        if lic['in_use'] > 0:
+            logging.debug("Command to add new license reservation %s", lic)
+            # no reservation yet, in_use is the starting value
+            new_update_cmds.append(
+                create_create_license_reservation(lic['fullname'], lic['in_use'], partition, cluster=cluster)
+            )
 
     for res in update:
         lic = rlicenses[res]
